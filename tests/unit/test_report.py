@@ -8,9 +8,9 @@ from typing import Any
 import pytest
 
 from cleandata.core.headers import HeaderPlan
-from cleandata.core.ledger import Ledger
+from cleandata.core.ledger import Ledger, Reject
 from cleandata.core.reader import SourceInfo
-from cleandata.report.build import ReportInput, build_report, round_floats, to_json
+from cleandata.report.build import ReportInput, build_report, reject_preview, round_floats, to_json
 from cleandata.report.html import flow_segments, number, render_html, stylesheet
 from support import ROOT, profile_of
 
@@ -224,3 +224,17 @@ def test_a_dry_run_is_marked_once() -> None:
 def test_a_column_without_statistics_is_a_value_error() -> None:
     with pytest.raises(ValueError, match="no statistics for column 'id'"):
         build_report(report_input(stats={}))
+
+
+def test_malformed_details_are_withheld_only_when_a_column_is_redacted() -> None:
+    cells = "r\tJane Doe\tx\t\textra cell"
+    workbook = Reject(0, 7, "Wave 1", "read", ["read.malformed"], cells)
+    other = Reject(1, 8, "Wave 1", "validate", ["age.max"], "130 > 99")
+    withheld = "malformed record (raw line withheld: report.redact is set)"
+    redacted = {"name"}
+    entry = reject_preview(workbook, ["name"], redacted, True)
+    assert entry["detail"] == withheld
+    assert entry["source_sheet"] == "Wave 1"
+    assert "Jane" not in json.dumps(entry)
+    assert reject_preview(other, ["name"], redacted, True)["detail"] == "130 > 99"
+    assert reject_preview(workbook, ["name"], set(), True)["detail"] == cells

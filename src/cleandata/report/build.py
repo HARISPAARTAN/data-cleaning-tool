@@ -40,6 +40,8 @@ PACKAGES: Final = (
     "pyarrow",
 )
 STAGES: Final = ("read", "validate", "dedupe", "missing")
+MALFORMED_RULE: Final = "read.malformed"
+MALFORMED_WITHHELD: Final = "malformed record (raw line withheld: report.redact is set)"
 
 
 def package_version(name: str) -> str | None:
@@ -107,7 +109,12 @@ def reject_preview(reject: Reject, data: Sequence[str], redacted: set[str], work
     entry: dict[str, Any] = {"source_row": reject.source_row}
     if workbook:
         entry["source_sheet"] = reject.source_sheet
-    entry.update({"stage": reject.stage, "rule": reject.rule, "detail": reject.detail, "values": values})
+    detail = reject.detail
+    if redacted and reject.rule == MALFORMED_RULE:
+        # The detail of a malformed record is the raw line or the joined cells, so redaction cannot
+        # mask single columns; the raw text stays in the rejects file, which is not redacted.
+        detail = MALFORMED_WITHHELD
+    entry.update({"stage": reject.stage, "rule": reject.rule, "detail": detail, "values": values})
     return entry
 
 

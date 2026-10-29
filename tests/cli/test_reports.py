@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import csv
 import re
 from pathlib import Path
 
@@ -97,3 +98,25 @@ def test_profile_kind_renders_with_the_same_template(tmp_path: Path) -> None:
     html = render_html(round_floats(analysis_report(analysis)))
     assert '<h2 id="file">' in html
     assert URL.search(html) is None
+
+
+def test_redaction_withholds_the_raw_line_of_malformed_records(tmp_path: Path) -> None:
+    result, _ = clean_fixture("04", tmp_path, "--report", str(tmp_path / "04.report.html"))
+    assert result.exit_code == 0
+    with (tmp_path / "04.rejects.csv").open(encoding="utf-8", newline="") as handle:
+        rows = [row for row in csv.DictReader(handle) if row["_rule"] == "read.malformed"]
+    names = [row["_detail"].split("\t")[1] for row in rows]
+    assert [row["_source_row"] for row in rows] == ["198", "282"]
+    assert all(name and name in row["_detail"] for name, row in zip(names, rows, strict=True))
+    data = report(tmp_path / "04.report.json")
+    previews = [row for row in data["rejects"]["preview"] if row["rule"] == "read.malformed"]
+    assert [row["source_row"] for row in previews] == [198, 282]
+    assert {row["detail"] for row in previews} == {
+        "malformed record (raw line withheld: report.redact is set)"
+    }
+    document = (tmp_path / "04.report.html").read_text(encoding="utf-8")
+    json_text = (tmp_path / "04.report.json").read_text(encoding="utf-8")
+    for name in names:
+        assert name not in json_text
+        assert name not in document
+    assert "malformed record (raw line withheld: report.redact is set)" in document

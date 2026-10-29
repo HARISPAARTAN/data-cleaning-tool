@@ -48,7 +48,7 @@ Top-level keys, in this order:
 
 ### Redaction
 
-Columns in `report.redact` appear in every example, top value and preview row as the first character, `***` and, for e-mail-like values, the domain: `a***@mail.example`. The cleaned file and the rejects file are not redacted; they are the client's data. A redacted column of any type reports no `min`, `max`, `mean` or `median` in `after`, and its `top` values, before and after, are masked the same way.
+Columns in `report.redact` appear in every example, top value and preview row as the first character, `***` and, for e-mail-like values, the domain: `a***@mail.example`. When `report.redact` is not empty, the `detail` of a `read.malformed` preview row is the fixed text `malformed record (raw line withheld: report.redact is set)`, because the raw line cannot be masked column by column. The cleaned file and the rejects file are not redacted, and the rejects file keeps the raw line; they are the client's data. A redacted column of any type reports no `min`, `max`, `mean` or `median` in `after`, and its `top` values, before and after, are masked the same way.
 
 ## HTML report
 
