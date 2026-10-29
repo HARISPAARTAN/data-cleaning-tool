@@ -79,6 +79,9 @@ extend-exclude = ["tools/sync_kit.py"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["cleandata", "make_data", "support"]
+
 [tool.mypy]
 python_version = "3.11"
 files = ["src/cleandata"]
