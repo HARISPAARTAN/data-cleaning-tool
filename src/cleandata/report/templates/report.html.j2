@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>{{ report.title }}</title>
+<script>
+try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<style>
+{{ css | safe }}
+</style>
+</head>
+<body>
+<main>
+{% if report.banner %}
+<p class="banner">{{ report.banner }}</p>
+{% endif %}
+{% set run = report.run if report.kind == "clean" else none %}
+<header class="top">
+  <div>
+    <h1>{{ report.title }}
+{% if run and run.dry_run %} <span class="badge badge--info">Dry run</span>{% endif %}
+{% if run and run.status != "ok" %} <span class="badge badge--danger">Failed: {{ "strict" if run.status == "failed_strict" else "quality gate" }}</span>{% endif %}
+{% if run and run.status == "ok" %} <span class="badge badge--ok">Passed</span>{% endif %}
+    </h1>
+    <p class="meta">
+      input <code>{{ report.input.name }}</code>
+{% if report.kind == "clean" %}
+      &middot; profile <code>{{ report.profile.file }}</code> ({{ report.profile.name }})
+      &middot; mode {{ run.mode | replace("_", "-") }}{% if run.chunk_size %} ({{ run.chunk_size | number }} records per chunk){% endif %}
+{% endif %}
+      &middot; clean-data {{ report.tool.version }}
+    </p>
+  </div>
+  <button class="theme-toggle" type="button" onclick="var r=document.documentElement,n=(r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'))==='light'?'dark':'light';r.setAttribute('data-theme',n);try{localStorage.setItem('hh-theme',n)}catch(e){}">Theme</button>
+</header>
+
+{% if report.kind == "clean" %}
+{% set rows = report.rows %}
+<section aria-label="Key figures">
+  <div class="kpis">
+    <div class="kpi"><p class="kpi__label">Read</p><p class="kpi__value">{{ rows.read | number }}</p></div>
+    <div class="kpi"><p class="kpi__label">Out</p><p class="kpi__value">{{ rows.out | number }}</p></div>
+    <div class="kpi"><p class="kpi__label">Rejected</p><p class="kpi__value">{{ rows.rejected | number }}</p></div>
+    <div class="kpi"><p class="kpi__label">Duplicates</p><p class="kpi__value">{{ rows.duplicates | number }}</p></div>
+    <div class="kpi"><p class="kpi__label">Cells changed</p><p class="kpi__value">{{ report.columns.values() | sum(attribute="changed_cells") | number }}</p></div>
+    <div class="kpi"><p class="kpi__label">Columns</p><p class="kpi__value">{{ report.columns | length }}</p></div>
+  </div>
+</section>
+
+<h2 id="flow">Row flow</h2>
+<p>read {{ rows.read | number }} = out {{ rows.out | number }} + rejected {{ rows.rejected | number }} + duplicates {{ rows.duplicates | number }} + empty {{ rows.empty | number }}. Reject rate {{ rows.reject_rate | percent }}{% if rows.max_reject_rate is not none %} against a gate of {{ rows.max_reject_rate | percent }}{% endif %}.</p>
+<svg class="flow" viewBox="0 0 1000 40" preserveAspectRatio="none" role="img" aria-label="Row flow: {% for s in segments %}{{ s.label }} {{ s.count }}{{ ", " if not loop.last }}{% endfor %}">
+{% for s in segments %}
+  <rect class="seg--{{ s.key }}" x="{{ s.x }}" y="0" width="{{ s.width }}" height="40"><title>{{ s.label }}: {{ s.count | number }}</title></rect>
+{% endfor %}
+</svg>
+<ul class="legend">
+{% for s in segments %}
+  <li><span class="swatch seg--{{ s.key }}" aria-hidden="true"></span>{{ s.label }} {{ s.count | number }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+<h2 id="warnings">Warnings</h2>
+{% if report.warnings %}
+<ul class="warnings">
+{% for w in report.warnings %}
+  <li><code>{{ w.code }}</code> {{ w.message }}{% if w.count > 1 %} ({{ w.count | number }}){% endif %}</li>
+{% endfor %}
+</ul>
+{% else %}
+<p class="muted">No warnings.</p>
+{% endif %}
+{% if report.kind == "clean" and report.notes %}
+<p class="muted">Notes:</p>
+<ul class="plain muted">
+{% for n in report.notes %}
+  <li><code>{{ n.code }}</code> {{ n.message }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+
+{% if report.kind == "profile" %}
+<h2 id="file">File</h2>
+{% set inp = report.input %}
+<div class="table-wrap"><table>
+  <tbody>
+    <tr><th scope="row">File</th><td>{{ inp.name }} &middot; {{ inp.size | number }} bytes</td></tr>
+    <tr><th scope="row">SHA-256</th><td class="cell">{{ inp.sha256 }}</td></tr>
+{% if inp.encoding %}
+    <tr><th scope="row">Encoding</th><td>{{ inp.encoding.name }} ({{ inp.encoding.method }}{% if inp.encoding.confidence is not none %}, confidence {{ inp.encoding.confidence }}{% endif %})</td></tr>
+    <tr><th scope="row">Delimiter</th><td class="cell">{{ inp.delimiter.value | tojson }}{% if inp.delimiter.share is not none %} (consistency {{ inp.delimiter.share }}){% endif %}</td></tr>
+    <tr><th scope="row">Header row</th><td>{{ inp.header_row }}</td></tr>
+{% endif %}
+    <tr><th scope="row">Records</th><td>{{ report.records.analysed | number }} analysed &middot; {{ report.records.empty }} empty &middot; {{ report.records.short }} short &middot; {{ report.records.malformed }} malformed &middot; {{ report.records.duplicates }} duplicate{% if report.records.stopped_early %} &middot; stopped early{% endif %}</td></tr>
+    <tr><th scope="row">Locale vote</th><td>decimal {{ report.file_notes.locale.decimal | tojson }}, thousands {{ report.file_notes.locale.thousands | tojson }}</td></tr>
+  </tbody>
+</table></div>
+{% if report.sheets %}
+<h3>Sheets</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Sheet</th><th scope="col" class="num">Header row</th><th scope="col" class="num">Records</th><th scope="col">Analysed</th></tr></thead>
+  <tbody>
+{% for s in report.sheets %}
+    <tr><td>{{ s.name }}</td><td class="num">{{ s.header_row | number }}</td><td class="num">{{ s.records | number }}</td><td>{{ "yes" if s.selected else "no" }}</td></tr>
+{% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+
+<h2 id="columns">Columns</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col" class="num">#</th><th scope="col">Header</th><th scope="col">Normalised</th><th scope="col" class="num">Non-empty</th><th scope="col" class="num">Distinct</th><th scope="col">Guess</th><th scope="col">Details</th></tr></thead>
+  <tbody>
+{% for c in report.columns %}
+    <tr>
+      <td class="num">{{ c.position }}</td><td>{{ c.raw }}</td><td><code>{{ c.normalised }}</code></td>
+      <td class="num">{{ c.non_empty | number }}</td><td class="num">{{ c.distinct | number }}{% if c.distinct_capped %}+{% endif %}</td>
+      <td>{% if c.guess %}{{ c.guess.label }} ({{ c.guess.share | percent }}){% elif c.non_empty %}string{% else %}empty{% endif %}</td>
+      <td>
+        <details><summary>values and candidates</summary>
+          <p>length {{ c.min_length | number }} to {{ c.max_length | number }} &middot; whitespace {{ c.whitespace }} &middot; non-NFC {{ c.non_nfc }} &middot; control {{ c.control }}</p>
+{% if c.null_like %}
+          <p>null-like: {% for token, count in c.null_like.items() %}<code>{{ token | tojson }}</code> &times;{{ count }}{{ ", " if not loop.last }}{% endfor %}</p>
+{% endif %}
+          <ul class="plain">
+{% for value, count in c.top %}
+            <li><code>{{ value | tojson }}</code> &times;{{ count | number }}</li>
+{% endfor %}
+          </ul>
+          <ul class="plain">
+{% for k in c.candidates %}
+            <li>{{ k.label }}: {{ k.share | percent }}</li>
+{% endfor %}
+          </ul>
+{% for note in c.notes %}
+          <p class="warn">{{ note }}</p>
+{% endfor %}
+        </details>
+      </td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table></div>
+{% if report.file_notes.duplicate_headers or report.file_notes.empty_columns %}
+<p>Repeated headers: {{ report.file_notes.duplicate_headers | join(", ") or "none" }} &middot; empty columns: {{ report.file_notes.empty_columns | join(", ") or "none" }}</p>
+{% endif %}
+{% else %}
+
+<h2 id="headers">Header mapping</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col" class="num">#</th><th scope="col">Raw</th><th scope="col">Normalised</th><th scope="col">Final</th><th scope="col">Action</th></tr></thead>
+  <tbody>
+{% for h in report.headers %}
+    <tr><td class="num">{{ h.position | number }}</td><td>{{ h.raw if h.raw is not none else "" }}</td><td><code>{{ h.normalised if h.normalised is not none else "" }}</code></td><td><code>{{ h.final if h.final is not none else "" }}</code></td><td>{{ h.action | replace("_", " ") }}</td></tr>
+{% endfor %}
+  </tbody>
+</table></div>
+
+<h2 id="columns">Columns before and after</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col" class="num">Non-empty before</th><th scope="col" class="num">Nulls after</th><th scope="col" class="num">Distinct after</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Filled</th><th scope="col" class="num">Changed</th><th scope="col">Details</th></tr></thead>
+  <tbody>
+{% for name, c in report.columns.items() %}
+    <tr>
+      <td><code>{{ name }}</code></td><td>{{ c.type }}</td>
+      <td class="num">{{ c.before.non_empty | number if c.before else "" }}</td>
+      <td class="num">{{ c.after.nulls | number }}</td>
+      <td class="num">{{ c.after.distinct | number }}{% if c.after.distinct_capped %}+{% endif %}</td>
+      <td class="num">{{ c.coercion.invalid | number if c.coercion else "" }}</td>
+      <td class="num">{{ c.after.filled | number }}</td>
+      <td class="num">{{ c.changed_cells | number }}</td>
+      <td>
+        <details><summary>details</summary>
+{% if c.before %}
+          <p>before: whitespace {{ c.before.whitespace }} &middot; non-NFC {{ c.before.non_nfc }} &middot; control {{ c.before.control }} &middot; null-like {{ c.before.null_like }} &middot; length {{ c.before.min_length | number }} to {{ c.before.max_length | number }}</p>
+{% if c.before.top %}
+          <p>top before: {% for value, count in c.before.top %}<code>{{ value | tojson }}</code> &times;{{ count }}{{ ", " if not loop.last }}{% endfor %}</p>
+{% endif %}
+{% endif %}
+          <p>after: min {{ c.after.min | number }} &middot; max {{ c.after.max | number }} &middot; mean {{ c.after.mean | number }} &middot; median {{ c.after.median | number }}</p>
+{% if c.after.top %}
+          <p>top after: {% for value, count in c.after.top %}<code>{{ value | tojson }}</code> &times;{{ count }}{{ ", " if not loop.last }}{% endfor %}</p>
+{% endif %}
+{% if c.coercion and c.coercion.patterns %}
+          <p>patterns: {% for pattern, count in c.coercion.patterns.items() %}<code>{{ pattern }}</code> {{ count | number }}{{ ", " if not loop.last }}{% endfor %}</p>
+{% endif %}
+{% if c.missing %}
+          <p>missing: {{ c.missing.strategy }}{% if c.missing.value is not none %} with {{ c.missing.value }}{% endif %}, {{ c.missing.filled | number }} filled</p>
+{% endif %}
+        </details>
+      </td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table></div>
+
+<h2 id="rules">Rules</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Rule</th><th scope="col" class="num">Checked</th><th scope="col" class="num">Failed</th><th scope="col">Examples</th></tr></thead>
+  <tbody>
+{% for r in report.rules %}
+    <tr><td><code>{{ r.id }}</code></td><td class="num">{{ r.checked | number }}</td><td class="num">{{ r.failed | number }}</td><td class="cell">{{ r.examples | join("\n") }}</td></tr>
+{% endfor %}
+  </tbody>
+</table></div>
+
+<h2 id="duplicates">Duplicates</h2>
+{% set d = report.dedupe %}
+<ul class="plain">
+{% if d.exact %}
+  <li>exact: {{ d.exact.removed | number }} removed of {{ d.exact.checked | number }} rows</li>
+{% endif %}
+{% for k in d["keys"] %}
+  <li><code>{{ k.id }}</code> [{{ k.columns | join(", ") }}] keep {{ k.keep }}{% if k.order_by %} by {{ k.order_by }}{% endif %}: {{ k.removed | number }} removed</li>
+{% endfor %}
+{% if d.fuzzy %}
+  <li>fuzzy ({{ d.fuzzy.action }}, threshold {{ d.fuzzy.threshold }}): {{ d.fuzzy.clusters | length }} clusters with {{ d.fuzzy.clustered_rows | number }} rows, {{ d.fuzzy.removed | number }} removed, {{ d.fuzzy.blocks_compared | number }} of {{ d.fuzzy.blocks | number }} blocks compared, {{ d.fuzzy.skipped_blocks }} skipped</li>
+{% endif %}
+</ul>
+{% if d.fuzzy and d.fuzzy.clusters %}
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Cluster</th><th scope="col">Members</th><th scope="col">Scores</th></tr></thead>
+  <tbody>
+{% for cl in d.fuzzy.clusters[:50] %}
+    <tr><td><code>{{ cl.id }}</code></td><td>{{ cl.members | map(attribute="label") | join(", ") }}</td><td class="cell">{% for s in cl.scores %}{{ s.a }}~{{ s.b }} {{ s.score }}{{ "\n" if not loop.last }}{% endfor %}</td></tr>
+{% endfor %}
+  </tbody>
+</table></div>
+{% if d.fuzzy.clusters | length > 50 %}
+<p class="muted">The first 50 of {{ d.fuzzy.clusters | length }} clusters; the JSON report lists all.</p>
+{% endif %}
+{% endif %}
+
+<h2 id="rejects">Rejects</h2>
+{% set rj = report.rejects %}
+<p>{{ rj.rows | number }} rows{% if rj.file %} in <code>{{ rj.file }}</code>{% endif %}: {% for stage, count in rj.by_stage.items() %}{{ stage }} {{ count | number }}{{ " · " if not loop.last }}{% endfor %}.</p>
+{% if rj.by_rule %}
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">First failing rule</th><th scope="col" class="num">Rows</th></tr></thead>
+  <tbody>
+{% for rule, count in rj.by_rule.items() %}
+    <tr><td><code>{{ rule }}</code></td><td class="num">{{ count | number }}</td></tr>
+{% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+{% if rj.by_column %}
+<p>By column: {% for column, count in rj.by_column.items() %}<code>{{ column }}</code> {{ count | number }}{{ ", " if not loop.last }}{% endfor %}</p>
+{% endif %}
+{% if rj.preview %}
+<h3>First {{ rj.preview | length }} rejected rows</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col" class="num">Row</th>{% if report.input.kind == "xlsx" %}<th scope="col">Sheet</th>{% endif %}<th scope="col">Stage</th><th scope="col">Rule</th><th scope="col">Detail</th>{% for name in rj.preview[0]["values"] %}<th scope="col">{{ name }}</th>{% endfor %}</tr></thead>
+  <tbody>
+{% for p in rj.preview %}
+    <tr><td class="num">{{ p.source_row }}</td>{% if report.input.kind == "xlsx" %}<td>{{ p.source_sheet }}</td>{% endif %}<td>{{ p.stage }}</td><td><code>{{ p.rule }}</code></td><td class="cell">{{ p.detail }}</td>{% for value in p["values"].values() %}<td class="cell">{{ value }}</td>{% endfor %}</tr>
+{% endfor %}
+  </tbody>
+</table></div>
+{% endif %}
+
+{% if report.explain %}
+<h2 id="explain">Explain</h2>
+<pre>{{ report.explain | join("\n") }}</pre>
+{% endif %}
+{% endif %}
+
+<h2 id="run">Run info</h2>
+<div class="table-wrap"><table>
+  <tbody>
+{% if report.kind == "clean" %}
+    <tr><th scope="row">Started</th><td>{{ run.started_at }}{% if run.duration_s is not none %} &middot; {{ run.duration_s }} s{% endif %}</td></tr>
+    <tr><th scope="row">Status</th><td>{{ run.status }} &middot; exit {{ run.exit_code }}{% if run.strict %} &middot; strict{% endif %}</td></tr>
+    <tr><th scope="row">Profile SHA-256</th><td class="cell">{{ report.profile.sha256 }}</td></tr>
+    <tr><th scope="row">Input SHA-256</th><td class="cell">{{ report.input.sha256 }}</td></tr>
+{% endif %}
+    <tr><th scope="row">Versions</th><td>clean-data {{ report.tool.version }}, Python {{ report.tool.python }}{% for name, version in report.tool.packages.items() if version %}, {{ name }} {{ version }}{% endfor %}</td></tr>
+  </tbody>
+</table></div>
+
+<footer>
+{% if report.footer %}
+<p>{{ report.footer }}</p>
+{% endif %}
+<p>Report schema version {{ report.schema_version }}. The JSON report holds every figure on this page.</p>
+</footer>
+</main>
+</body>
+</html>
