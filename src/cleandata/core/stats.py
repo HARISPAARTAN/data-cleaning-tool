@@ -7,9 +7,12 @@ are exact up to 10,000. Medians and top values need every value, so chunked runs
 
 from __future__ import annotations
 
+import heapq
+import math
 import statistics
 from collections import Counter
 from collections.abc import Iterable, Mapping
+from fractions import Fraction
 from typing import TYPE_CHECKING, Any, Final, cast
 
 import pandas as pd
@@ -26,7 +29,7 @@ TOP: Final = 5
 
 
 def _top(counter: Counter[str], redact: bool) -> list[list[object]]:
-    ranked = sorted(counter.items(), key=lambda item: (-item[1], item[0]))[:TOP]
+    ranked = heapq.nsmallest(TOP, counter.items(), key=lambda item: (-item[1], item[0]))
     return [[redact_value(value) if redact else value, count] for value, count in ranked]
 
 
@@ -100,6 +103,8 @@ class BeforeColumn:
 
 
 class AfterColumn:
+    """Typed values. NaN and infinite floats count as values but are left out of min, max, mean and median."""
+
     def __init__(self, ctype: str | None, keep_values: bool) -> None:
         self.ctype = ctype
         self.count = 0
@@ -107,7 +112,9 @@ class AfterColumn:
         self.distinct = _Distinct()
         self.minimum: object = None
         self.maximum: object = None
+        self.measured = 0
         self.total = 0.0
+        self.compensation = 0.0
         self.numbers: list[float] | None = [] if keep_values else None
         self.counter: Counter[str] | None = Counter() if keep_values else None
 
@@ -126,35 +133,55 @@ class AfterColumn:
                 continue
             self.count += 1
             self.distinct.add(canonical_str(value))
-            if self.ordered:
-                current = cast(Any, value)
-                if self.minimum is None or current < self.minimum:
-                    self.minimum = value
-                if self.maximum is None or current > self.maximum:
-                    self.maximum = value
             if self.numeric:
                 number = float(cast(Any, value))
-                self.total += number
+                if not math.isfinite(number):
+                    continue
+                self._extend_range(value)
+                self._add(number)
                 if self.numbers is not None:
                     self.numbers.append(number)
-            elif self.counter is not None and not self.ordered:
+            elif self.ordered:
+                self._extend_range(value)
+            elif self.counter is not None:
                 self.counter[canonical_str(value)] += 1
 
+    def _extend_range(self, value: object) -> None:
+        current = cast(Any, value)
+        if self.minimum is None or current < self.minimum:
+            self.minimum = value
+        if self.maximum is None or current > self.maximum:
+            self.maximum = value
+
+    def _add(self, number: float) -> None:
+        """Neumaier (Kahan-Babuska) compensated running sum, still one pass in source order."""
+        total = self.total + number
+        if abs(self.total) >= abs(number):
+            self.compensation += (self.total - total) + number
+        else:
+            self.compensation += (number - total) + self.total
+        self.total = total
+        self.measured += 1
+
+    def _mean(self) -> float | None:
+        """Sum over count, divided exactly once at the end so the last digit is the correctly rounded one."""
+        if not self.measured or not (math.isfinite(self.total) and math.isfinite(self.compensation)):
+            return None
+        return float((Fraction(self.total) + Fraction(self.compensation)) / self.measured)
+
     def result(self, redact: bool, filled: int) -> dict[str, object]:
-        mean = self.total / self.count if self.numeric and self.count else None
-        median = statistics.median(self.numbers) if self.numeric and self.numbers else None
+        """A redacted column of any type reports no min, max, mean or median, and masks its top values."""
         top = None
         if self.counter is not None and not self.ordered:
             top = _top(self.counter, redact)
-        hide = redact and not self.numeric
         return {
             "count": self.count,
             "nulls": self.nulls,
             **self.distinct.result(),
-            "min": None if hide else json_value(self.minimum),
-            "max": None if hide else json_value(self.maximum),
-            "mean": mean,
-            "median": median,
+            "min": None if redact else json_value(self.minimum),
+            "max": None if redact else json_value(self.maximum),
+            "mean": None if redact else self._mean(),
+            "median": None if redact or not self.numbers else statistics.median(self.numbers),
             "top": top,
             "filled": filled,
         }
@@ -172,6 +199,7 @@ class StatsCollector:
     ) -> None:
         self.columns = columns
         self.plans = plans
+        self.in_memory = in_memory
         self.before = {
             name: BeforeColumn(plans[name].text.null_tokens if name in plans else default_tokens, in_memory)
             for name in columns
@@ -188,7 +216,7 @@ class StatsCollector:
     def update_after(self, frame: pd.DataFrame) -> None:
         for name in data_columns(frame):
             if name not in self.after:
-                self.after[name] = AfterColumn(None, self.after[self.columns[0]].counter is not None)
+                self.after[name] = AfterColumn(None, self.in_memory)
             self.after[name].update(column(frame, name))
 
     def result(self, filled: Mapping[str, int]) -> dict[str, dict[str, object]]:
