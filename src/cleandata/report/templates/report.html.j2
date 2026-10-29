@@ -267,7 +267,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 
 {% if report.explain %}
 <h2 id="explain">Explain</h2>
-<pre>{{ report.explain | join("\n") }}</pre>
+<pre tabindex="0" role="region" aria-label="Explain">{{ report.explain | join("\n") }}</pre>
 {% endif %}
 {% endif %}
 

@@ -475,7 +475,7 @@ def test_the_schema_exporter_writes_and_flags_drift(
     assert "out of date" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("codec", ["rot13", "zlib_codec"])
+@pytest.mark.parametrize("codec", ["rot13", "zlib_codec", "idna"])
 @pytest.mark.parametrize("path", ["input.encoding", "output.csv.encoding"])
 def test_a_bytes_codec_is_refused_in_both_encoding_fields(codec: str, path: str) -> None:
     section, *inner, field = path.split(".")

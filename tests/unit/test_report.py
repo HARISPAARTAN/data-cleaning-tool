@@ -238,3 +238,10 @@ def test_malformed_details_are_withheld_only_when_a_column_is_redacted() -> None
     assert "Jane" not in json.dumps(entry)
     assert reject_preview(other, ["name"], redacted, True)["detail"] == "130 > 99"
     assert reject_preview(workbook, ["name"], set(), True)["detail"] == cells
+
+
+def test_the_explain_block_is_reachable_from_the_keyboard() -> None:
+    report = minimal_report()
+    report["explain"] = ["first step", "second step"]
+    html = render_html(report)
+    assert '<pre tabindex="0" role="region" aria-label="Explain">first step\nsecond step</pre>' in html

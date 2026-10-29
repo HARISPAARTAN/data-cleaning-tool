@@ -461,7 +461,7 @@ def test_the_encoding_option_checks_the_codec() -> None:
     assert "encoding   utf-8-sig (given)" in good.stdout
 
 
-@pytest.mark.parametrize("codec", ["rot13", "zlib_codec"])
+@pytest.mark.parametrize("codec", ["rot13", "zlib_codec", "idna"])
 def test_a_non_text_codec_is_a_usage_error_everywhere(tmp_path: Path, codec: str) -> None:
     option = invoke(["profile", SURVEY, "--encoding", codec])
     assert option.exit_code == 2
