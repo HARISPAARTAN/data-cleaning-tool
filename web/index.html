@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Data-Cleaning Tool · usage and demo run</title>
+<meta name="description" content="A command-line tool that cleans messy CSV and Excel exports reproducibly from a YAML profile, with a rejects file and an HTML report. Demo run on invented survey data.">
+<link rel="stylesheet" href="kit/fonts/fonts.css">
+<link rel="stylesheet" href="kit/tokens.css">
+<link rel="stylesheet" href="kit/base.css">
+<script src="kit/theme-boot.js"></script>
+<style>
+main{display:grid;gap:var(--space-7);min-width:0}
+main>section{display:grid;gap:var(--space-4);min-width:0}
+.lead{max-width:68ch;color:var(--muted);font-size:var(--fs-lg)}
+.points{display:grid;gap:var(--space-2);padding-left:1.2em}
+.points li::marker{color:var(--accent)}
+.prose{max-width:72ch}
+.term{margin:0;padding:var(--space-3) var(--space-4);overflow-x:auto;font-variant-ligatures:none;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface-2);font-size:var(--fs-xs);line-height:1.55;tab-size:4}
+.term--cmd{color:var(--text);font-size:var(--fs-sm)}
+.term--cmd::before{content:"$ ";content:"$ "/"";color:var(--accent)}
+.stream{display:grid;gap:var(--space-1);min-width:0}
+.step{display:grid;gap:var(--space-3);min-width:0}
+.step h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:var(--space-2)}
+.note{color:var(--muted);font-size:var(--fs-sm)}
+.pf-table tbody tr td.is-changed{position:relative;background:color-mix(in srgb,var(--accent) 18%,var(--surface));box-shadow:inset 0 -2px 0 var(--accent)}
+.pf-table tbody th{color:var(--muted);font-family:var(--font-mono);text-transform:none}
+.legend{display:inline-flex;align-items:center;gap:var(--space-2);color:var(--muted);font-size:var(--fs-sm)}
+.legend__swatch{display:inline-block;width:1.4em;height:1em;border-radius:3px;background:color-mix(in srgb,var(--accent) 18%,var(--surface));box-shadow:inset 0 -2px 0 var(--accent)}
+.files{display:grid;gap:var(--space-2);padding:0;list-style:none}
+.files li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--space-1) var(--space-3);padding:var(--space-2) var(--space-3);border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface)}
+.files span{color:var(--muted);font-family:var(--font-mono);font-size:var(--fs-xs)}
+.actions{display:flex;flex-wrap:wrap;gap:var(--space-2)}
+</style>
+</head>
+<body class="pf-has-banner">
+<aside class="pf-banner" aria-label="Demo notice"><span>Demo with invented data for a fictional company</span><a href="https://github.com/HARISPAARTAN/data-cleaning-tool">Source code</a></aside>
+<div class="pf-page">
+<header class="pf-header">
+  <a class="pf-brand" href="./"><span class="pf-brand__mark" aria-hidden="true">HH</span>Data-Cleaning Tool</a>
+  <nav class="pf-header__nav" aria-label="Sections"><a href="#install">Install</a><a href="#demo">Demo run</a><a href="#before-after">Before and after</a><a href="#files">Files</a><a href="#exit-codes">Exit codes</a></nav>
+  <div class="pf-header__tools"><span id="theme"></span></div>
+</header>
+<main>
+<section aria-labelledby="top">
+  <h1 id="top">Data-Cleaning Tool</h1>
+  <p class="lead">Cleans messy CSV and Excel exports reproducibly from a YAML profile, with a rejects file and an HTML report. Version 0.1.0, shown here on an invented survey export of a fictional panel research company.</p>
+  <ul class="points">
+    <li>Reads CSV and Excel the same way every time: encoding and delimiter sniffing, header offsets, footer rows, several sheets, short and malformed records.</li>
+    <li>Normalises headers to snake_case and cleans text: Unicode form, invisible characters, whitespace, null tokens, case and value maps.</li>
+    <li>Converts types with German and English number and date formats; a value that does not parse is rejected, never guessed.</li>
+    <li>Removes exact and key duplicates (fuzzy matching as an option), fills missing values per column and checks ranges, patterns and allowed values.</li>
+    <li>Writes the cleaned file (CSV, Excel or Parquet), every removed row with its reason, and a JSON and HTML report with before and after statistics.</li>
+  </ul>
+  <div class="actions">
+    <a class="pf-btn pf-btn--primary" href="demo/report.html">Open the cleaning report</a>
+    <a class="pf-btn pf-btn--ghost" href="https://github.com/HARISPAARTAN/data-cleaning-tool">Source code and documentation</a>
+  </div>
+</section>
+
+<section id="install" aria-labelledby="install-title">
+  <h2 id="install-title">Install and run</h2>
+  <p class="prose">Install the command from the release wheel with <a href="https://docs.astral.sh/uv/">uv</a>, extras included:</p>
+  <pre class="term term--cmd"><code>uv tool install "data-cleaning-tool[fuzzy,parquet] @ https://github.com/HARISPAARTAN/data-cleaning-tool/releases/download/v0.1.0/data_cleaning_tool-0.1.0-py3-none-any.whl"</code></pre>
+  <p class="prose">Or work from a clone, which also has the fixtures and profiles used below:</p>
+  <pre class="term term--cmd"><code>git clone https://github.com/HARISPAARTAN/data-cleaning-tool.git &amp;&amp; cd data-cleaning-tool &amp;&amp; uv sync --all-extras</code></pre>
+  <p class="prose">In a clone, put <code>uv run</code> in front of each <code>clean-data</code> command. The extras are optional: <code>fuzzy</code> (rapidfuzz) for fuzzy de-duplication, <code>parquet</code> (pyarrow) for Parquet output.</p>
+</section>
+
+<section id="demo" aria-labelledby="demo-title">
+  <h2 id="demo-title">Demo run on the survey fixture</h2>
+  <p class="prose">Four commands on <code>fixtures/01_survey_export_de.csv</code>, a German survey export with 1,026 records, recorded with the release build. Standard output carries results only; logs and the explain text go to standard error.</p>
+  <div class="pf-grid" style="--min:140px">
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">read</span><span class="pf-kpi__value">1026</span></div>
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">empty</span><span class="pf-kpi__value">8</span></div>
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">rejected</span><span class="pf-kpi__value">18</span></div>
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">duplicates</span><span class="pf-kpi__value">18</span></div>
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">out</span><span class="pf-kpi__value">982</span></div>
+    <div class="pf-kpi"><span class="pf-kpi__label pf-label">exit</span><span class="pf-kpi__value">0</span></div>
+  </div>
+  <article class="step" id="step-profile" aria-labelledby="step-profile-title">
+    <h3 id="step-profile-title"><span class="pf-label">1 of 4</span>Profile the file</h3>
+    <pre class="term term--cmd"><code>clean-data profile fixtures/01_survey_export_de.csv</code></pre>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>file       01_survey_export_de.csv · 107,237 bytes · sha256 6ca4696f292c4a49
+encoding   utf-8-sig (bom)
+delimiter  &#39;;&#39; (consistency 1.00)
+header     row 1
+records    1,026 · empty 8 · short 0 · malformed 0 · duplicate 8
+locale     decimal &#39;,&#39;, thousands &#39;.&#39;
+
+  #  header                     normalised                 non-empty distinct  guess
+  1  Respondent ID              respondent_id                   1017      999  string
+  2  Welle                      welle                           1018        4  integer(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+  3  Startdatum                 startdatum                      1018      755  date(%Y-%m-%d, %d.%m.%Y, %d/%m/%Y) 99.0 %
+     note: 95 values parse day-first and month-first (%d/%m/%Y and %m/%d/%Y); the guess reads them day-first
+  4  Abgeschlossen am           abgeschlossen_am                1018     1006  datetime(%d.%m.%Y %H:%M) 100.0 %
+  5  Alter                      alter                           1018       73  integer(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+     null-like &#39;k.A.&#39; x3
+  6  Geschlecht                 geschlecht                      1018        8  string
+  7  Land                       land                            1018        6  string
+  8  Haushaltseinkommen (€)     haushaltseinkommen_eur           998      374  integer(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+     note: 189 values read differently in English and German style (e.g. &#34;38.500&#34; is 38.5 or 38500)
+  9  Ausgaben letzter Monat (€) ausgaben_letzter_monat_eur      1018     1000  number(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+ 10  Zufriedenheit              zufriedenheit                   1003       10  integer(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+ 11  NPS                        nps                             1018       11  integer(decimal=&#39;,&#39;, thousands=&#39;.&#39;) 100.0 %
+ 12  Kommentar                  kommentar                        588       15  string
+ 13  Kommentar                  kommentar_2                      253        6  string
+ 14                             column_14                          0        0  empty
+
+repeated headers: Kommentar
+empty columns: column_14
+</code></pre></div>
+  </article>
+  <article class="step" id="step-init" aria-labelledby="step-init-title">
+    <h3 id="step-init-title"><span class="pf-label">2 of 4</span>Write a profile skeleton</h3>
+    <pre class="term term--cmd"><code>clean-data init fixtures/01_survey_export_de.csv</code></pre>
+    <p class="note">The first 30 of 89 lines.</p>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code># Profile skeleton from clean-data init 0.1.0 for 01_survey_export_de.csv.
+# Review every column. Validation rules (required, min, max, regex, allowed) and missing-value
+# strategies are not guessed: add them where the data needs them. Reference: docs/profile-reference.md
+version: 1
+name: &#34;01_survey_export_de&#34;
+description: &#34;Skeleton generated from 01_survey_export_de.csv&#34;
+input:
+  encoding: &#34;utf-8-sig&#34;  # bom
+  delimiter: &#34;;&#34;
+  header_row: 1
+  null_tokens: [&#34;&#34;, &#34;k.A.&#34;]
+  locale:
+    decimal: &#34;,&#34;
+    thousands: &#34;.&#34;
+    date_formats: [&#34;%Y-%m-%d&#34;, &#34;%d.%m.%Y&#34;, &#34;%d/%m/%Y&#34;]
+    datetime_formats: [&#34;%d.%m.%Y %H:%M&#34;]
+headers:
+  normalise: snake_case
+  # Normalised input names: respondent_id, welle, startdatum, abgeschlossen_am, alter, geschlecht, land, haushaltseinkommen_eur, ausgaben_letzter_monat_eur, zufriedenheit, nps, kommentar, kommentar_2, column_14
+  # rename maps a normalised name to the output name, e.g. {old_name: new_name}
+  rename: {}
+  drop: [&#34;column_14&#34;]  # empty in the analysed records
+columns:
+  respondent_id:
+    type: string
+    # 1017 non-empty, 999 distinct
+    # e.g. &#34;NG-279327&#34;, &#34;NG-959966&#34;, &#34;NG-926477&#34;
+  welle:
+    type: integer
+    # 1018 non-empty, 4 distinct
+</code></pre></div>
+  </article>
+  <article class="step" id="step-explain" aria-labelledby="step-explain-title">
+    <h3 id="step-explain-title"><span class="pf-label">3 of 4</span>Dry run with --explain</h3>
+    <pre class="term term--cmd"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --dry-run --explain --report out/dry-run.json</code></pre>
+    <p class="note">An excerpt of stderr: the plan, then the blocks for one column, the age rules, de-duplication and the fills. The full text is in the report&#39;s Explain section when --explain is given.</p>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
+</code></pre></div>
+    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0"><code>INFO: [plan]     in-memory run · profile survey-de
+INFO: [read]     encoding utf-8-sig (given) · delimiter &#39;;&#39; · header row 1 · footer rows 0
+…
+INFO: [dedupe]   dedupe.exact · dedupe.key.1 [respondent_id] keep last by completed_at
+INFO: [read]     1026 records · 0 malformed · 0 short · 0 footer rows skipped
+…
+INFO: [types]    household_income number(decimal=&#34;,&#34;, thousands=&#34;.&#34;)  parsed 998 · null 20 · invalid 0
+INFO:            r2 &#34;45.000,00&#34; -&gt; 45000.0 · r3 &#34;38.500&#34; -&gt; 38500.0 · r4 &#34;47.500&#34; -&gt; 47500.0 · r5 &#34;40.500,00&#34; -&gt; 40500.0 · r6 &#34;28.500,00&#34; -&gt; 28500.0
+…
+INFO: [validate] age.type (integer)  failed 0
+INFO: [validate] age.min (&gt;= 16)  failed 2 · r48 &#34;15&#34; · r76 &#34;12&#34;
+INFO: [validate] age.max (&lt;= 99)  failed 3 · r118 &#34;130&#34; · r544 &#34;150&#34; · r871 &#34;101&#34;
+…
+INFO: [dedupe]   dedupe.exact  removed 12 · r85 duplicate of r80 · r304 duplicate of r124 · r324 duplicate of r181 · r389 duplicate of r41 · r407 duplicate of r189
+INFO: [dedupe]   dedupe.key.1 [respondent_id] keep last by completed_at  removed 6 · r40 superseded by r902 · r190 superseded by r288 · r220 superseded by r687 · r422 superseded by r610 · r528 superseded by r783
+INFO: [missing]  household_income median 68000.0  filled 20
+INFO: [missing]  satisfaction median_low 6  filled 15
+…
+</code></pre></div>
+  </article>
+  <article class="step" id="step-clean" aria-labelledby="step-clean-title">
+    <h3 id="step-clean-title"><span class="pf-label">4 of 4</span>Clean, with rejects and both reports</h3>
+    <pre class="term term--cmd"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --out out/cleaned.csv --rejects out/rejects.csv --report out/report.html --report out/report.json</code></pre>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
+</code></pre></div>
+    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0"><code>INFO: read: 1026 records from 01_survey_export_de.csv
+INFO: structure: 8 empty records dropped, 13 output columns
+INFO: normalise: 2723 cells changed
+INFO: types: 10 invalid cells, 0 set to null
+INFO: validate: 18 rows rejected
+INFO: dedupe: 18 rows removed (12 exact, 6 by key, 0 fuzzy)
+INFO: missing: 35 cells filled, 0 rows dropped
+INFO: write: 982 rows written to cleaned.csv
+</code></pre></div>
+  </article>
+</section>
+
+<section id="before-after" aria-labelledby="before-after-title">
+  <h2 id="before-after-title">Before and after: the first 8 records</h2>
+  <p class="prose">Values as read (after header normalisation) and as written. Invisible characters are shown as escapes such as <code>&#92;u00a0</code>.</p>
+  <p class="legend"><span class="legend__swatch" aria-hidden="true"></span>Tinted and underlined: the cell changed during cleaning.</p>
+  <div class="pf-table-wrap" tabindex="0" role="region" aria-labelledby="before-caption">
+    <table class="pf-table">
+      <caption id="before-caption">Before: as read</caption>
+      <thead><tr><th scope="col">row</th><th scope="col">respondent_id</th><th scope="col">wave</th><th scope="col">start_date</th><th scope="col">completed_at</th><th scope="col">age</th><th scope="col">gender</th><th scope="col">country</th><th scope="col">household_income</th><th scope="col">spend_last_month_eur</th><th scope="col">satisfaction</th><th scope="col">nps</th><th scope="col">comment</th><th scope="col">interviewer_note</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">r2</th><td>NG-279327</td><td>4</td><td>21.03.2025</td><td>22.03.2025 08:01</td><td>55</td><td>w</td><td>Deutschland</td><td>45.000,00</td><td>2.016,82&#92;u00a0€</td><td>8</td><td>1</td><td>Preis und Leistung stimmen</td><td></td></tr>
+        <tr><th scope="row">r3</th><td>NG-959966</td><td>2</td><td>27.08.2026</td><td>28.08.2026 09:10</td><td>60</td><td>W</td><td>Deutschland</td><td>38.500</td><td>832,58&#92;u00a0€</td><td>9</td><td>8</td><td></td><td></td></tr>
+        <tr><th scope="row">r4</th><td>NG-926477</td><td>1</td><td>29.05.2025</td><td>30.05.2025 21:54</td><td>44</td><td>keine Angabe</td><td>Deutschland</td><td>47.500</td><td>1.482,09&#92;u00a0€</td><td>6</td><td>1</td><td>Fragebogen war zu lang</td><td></td></tr>
+        <tr><th scope="row">r5</th><td>NG-249014</td><td>2</td><td>16/11/2025</td><td>16.11.2025 12:42</td><td>47</td><td>divers</td><td>AT</td><td>40.500,00</td><td>2.133,26&#92;u00a0€</td><td>6</td><td>10</td><td>Preis und Leistung stimmen</td><td>Telefon besetzt,  zweiter Versuch</td></tr>
+        <tr><th scope="row">r6</th><td>NG-252513</td><td>3</td><td>08.06.2026</td><td>09.06.2026 16:38</td><td>77</td><td>weiblich</td><td>Österreich</td><td>28.500,00</td><td>259,17&#92;u00a0€</td><td>3</td><td>4</td><td>Preis und Leistung stimmen</td><td></td></tr>
+        <tr><th scope="row">r7</th><td>NG-172475</td><td>1</td><td>25.06.2026</td><td>27.06.2026 13:33</td><td>80</td><td>männlich</td><td>de</td><td>102.500,00</td><td>1.269,38&#92;u00a0€</td><td>2</td><td>1</td><td>Gerne wieder</td><td></td></tr>
+        <tr><th scope="row">r8</th><td>NG-504081</td><td>4</td><td>07.04.2026</td><td>08.04.2026 17:46</td><td>58</td><td>W</td><td>Österreich</td><td>43.000,00</td><td>1.012,56&#92;u00a0€</td><td>7</td><td>2</td><td></td><td></td></tr>
+        <tr><th scope="row">r9</th><td>NG-159651</td><td>4</td><td>05.03.2025</td><td>05.03.2025 18:48</td><td>39</td><td>W</td><td>Schweiz</td><td>38.000</td><td>1.758,26&#92;u00a0€</td><td>3</td><td>4</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="pf-table-wrap" tabindex="0" role="region" aria-labelledby="after-caption">
+    <table class="pf-table">
+      <caption id="after-caption">After: as written to cleaned.csv</caption>
+      <thead><tr><th scope="col">row</th><th scope="col">status</th><th scope="col">respondent_id</th><th scope="col">wave</th><th scope="col">start_date</th><th scope="col">completed_at</th><th scope="col">age</th><th scope="col">gender</th><th scope="col">country</th><th scope="col">household_income</th><th scope="col">spend_last_month_eur</th><th scope="col">satisfaction</th><th scope="col">nps</th><th scope="col">comment</th><th scope="col">interviewer_note</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">r2</th><td>kept</td><td>NG-279327</td><td>4</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-03-21</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-03-22T08:01:00</td><td>55</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>female</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>DE</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>45000.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2016.82</td><td>8</td><td>1</td><td>Preis und Leistung stimmen</td><td></td></tr>
+        <tr><th scope="row">r3</th><td>kept</td><td>NG-959966</td><td>2</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-08-27</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-08-28T09:10:00</td><td>60</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>female</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>DE</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>38500.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>832.58</td><td>9</td><td>8</td><td></td><td></td></tr>
+        <tr><th scope="row">r4</th><td>kept</td><td>NG-926477</td><td>1</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-05-29</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-05-30T21:54:00</td><td>44</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>not_stated</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>DE</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>47500.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>1482.09</td><td>6</td><td>1</td><td>Fragebogen war zu lang</td><td></td></tr>
+        <tr><th scope="row">r5</th><td>kept</td><td>NG-249014</td><td>2</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-11-16</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-11-16T12:42:00</td><td>47</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>diverse</td><td>AT</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>40500.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2133.26</td><td>6</td><td>10</td><td>Preis und Leistung stimmen</td><td>Telefon besetzt,  zweiter Versuch</td></tr>
+        <tr><th scope="row">r6</th><td>kept</td><td>NG-252513</td><td>3</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-06-08</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-06-09T16:38:00</td><td>77</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>female</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>AT</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>28500.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>259.17</td><td>3</td><td>4</td><td>Preis und Leistung stimmen</td><td></td></tr>
+        <tr><th scope="row">r7</th><td>kept</td><td>NG-172475</td><td>1</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-06-25</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-06-27T13:33:00</td><td>80</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>male</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>DE</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>102500.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>1269.38</td><td>2</td><td>1</td><td>Gerne wieder</td><td></td></tr>
+        <tr><th scope="row">r8</th><td>kept</td><td>NG-504081</td><td>4</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-04-07</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2026-04-08T17:46:00</td><td>58</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>female</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>AT</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>43000.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>1012.56</td><td>7</td><td>2</td><td></td><td></td></tr>
+        <tr><th scope="row">r9</th><td>kept</td><td>NG-159651</td><td>4</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-03-05</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>2025-03-05T18:48:00</td><td>39</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>female</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>CH</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>38000.0</td><td class="is-changed"><span class="pf-visually-hidden">changed: </span>1758.26</td><td>3</td><td>4</td><td></td><td></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="files" aria-labelledby="files-title">
+  <h2 id="files-title">Files of the demo run</h2>
+  <ul class="files">
+    <li><a href="demo/report.html">report.html</a><span>40,429 bytes</span></li>
+    <li><a href="demo/report.json">report.json</a><span>41,637 bytes</span></li>
+    <li><a href="demo/profile.yaml">profile.yaml</a><span>2,257 bytes</span></li>
+    <li><a href="demo/input.csv">input.csv</a><span>107,237 bytes</span></li>
+    <li><a href="demo/cleaned.csv">cleaned.csv</a><span>95,590 bytes</span></li>
+    <li><a href="demo/rejects.csv">rejects.csv</a><span>6,488 bytes</span></li>
+  </ul>
+  <p class="note">CI rebuilds these files and this page with <code>tools/build_demo.py --check</code> and fails on any byte difference.</p>
+</section>
+
+<section id="exit-codes" aria-labelledby="exit-title">
+  <h2 id="exit-title">Exit codes</h2>
+  <div class="pf-table-wrap" tabindex="0" role="region" aria-labelledby="exit-title">
+    <table class="pf-table">
+      <thead><tr><th scope="col">exit</th><th scope="col">meaning</th></tr></thead>
+      <tbody>
+        <tr><td class="pf-num">0</td><td style="white-space:normal">success; a run without --strict may still have rejects</td></tr>
+        <tr><td class="pf-num">1</td><td style="white-space:normal">internal error (a bug); run again with --log-level debug</td></tr>
+        <tr><td class="pf-num">2</td><td style="white-space:normal">usage or profile error, a profile that cannot run chunked, a missing extra</td></tr>
+        <tr><td class="pf-num">3</td><td style="white-space:normal">input error: missing or undecodable file, no matching sheet, a profile column absent</td></tr>
+        <tr><td class="pf-num">4</td><td style="white-space:normal">quality gate: --strict or quality.max_reject_rate; rejects and reports written, output not</td></tr>
+        <tr><td class="pf-num">5</td><td style="white-space:normal">output error: target not writable, Excel row limit exceeded</td></tr>
+        <tr><td class="pf-num">130</td><td style="white-space:normal">interrupted; temporary files removed</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</main>
+<footer class="pf-footer">
+  <p>Rebuilt from memory as a demo. The original client's name and data are not used.</p>
+  <p>Northgate Panel Research is a fictional company; every record is invented. <a href="https://github.com/HARISPAARTAN/data-cleaning-tool">Source code</a> under the MIT licence.</p>
+</footer>
+</div>
+<script type="module">
+import { mountBanner, mountThemeToggle } from './kit/kit.js';
+mountBanner({ repoUrl: 'https://github.com/HARISPAARTAN/data-cleaning-tool' });
+mountThemeToggle(document.getElementById('theme'));
+</script>
+</body>
+</html>

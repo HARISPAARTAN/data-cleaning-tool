@@ -1,0 +1,1865 @@
+{
+  "schema_version": 1,
+  "kind": "clean",
+  "title": "Survey wave export, German locale",
+  "tool": {
+    "name": "clean-data",
+    "distribution": "data-cleaning-tool",
+    "version": "0.1.0",
+    "python": "3.13",
+    "packages": {
+      "pandas": "3.1.0",
+      "pydantic": "2.14.1",
+      "click": "8.5.0",
+      "openpyxl": "3.1.5",
+      "charset-normalizer": "3.5.2",
+      "PyYAML": "6.0.3",
+      "Jinja2": "3.1.6",
+      "rapidfuzz": "3.14.6",
+      "pyarrow": "26.0.0"
+    }
+  },
+  "run": {
+    "started_at": "2026-10-29T00:00:00Z",
+    "duration_s": null,
+    "mode": "in_memory",
+    "chunk_size": null,
+    "dry_run": false,
+    "strict": false,
+    "status": "ok",
+    "exit_code": 0
+  },
+  "input": {
+    "name": "01_survey_export_de.csv",
+    "size": 107237,
+    "sha256": "6ca4696f292c4a49139e0ab854d634fdfdaa2d863b74b2e4a6741efac23a0b79",
+    "kind": "csv",
+    "encoding": {
+      "name": "utf-8-sig",
+      "method": "given",
+      "confidence": null
+    },
+    "delimiter": {
+      "value": ";",
+      "share": null
+    },
+    "header_row": 1,
+    "sheets": [],
+    "ignored_sheets": [],
+    "records": 1026,
+    "footer_skipped": 0,
+    "short_records": 0,
+    "malformed": 0
+  },
+  "profile": {
+    "name": "survey-de",
+    "file": "01_survey.yaml",
+    "sha256": "d8c56a41c66f1dfe1973ef0afb2c94f94c11039c13963f3e7a5aa2f62a131ad8"
+  },
+  "headers": [
+    {
+      "position": 1,
+      "raw": "Respondent ID",
+      "normalised": "respondent_id",
+      "final": "respondent_id",
+      "action": "kept"
+    },
+    {
+      "position": 2,
+      "raw": "Welle",
+      "normalised": "welle",
+      "final": "wave",
+      "action": "renamed"
+    },
+    {
+      "position": 3,
+      "raw": "Startdatum",
+      "normalised": "startdatum",
+      "final": "start_date",
+      "action": "renamed"
+    },
+    {
+      "position": 4,
+      "raw": "Abgeschlossen am",
+      "normalised": "abgeschlossen_am",
+      "final": "completed_at",
+      "action": "renamed"
+    },
+    {
+      "position": 5,
+      "raw": "Alter",
+      "normalised": "alter",
+      "final": "age",
+      "action": "renamed"
+    },
+    {
+      "position": 6,
+      "raw": "Geschlecht",
+      "normalised": "geschlecht",
+      "final": "gender",
+      "action": "renamed"
+    },
+    {
+      "position": 7,
+      "raw": "Land",
+      "normalised": "land",
+      "final": "country",
+      "action": "renamed"
+    },
+    {
+      "position": 8,
+      "raw": "Haushaltseinkommen (€)",
+      "normalised": "haushaltseinkommen_eur",
+      "final": "household_income",
+      "action": "renamed"
+    },
+    {
+      "position": 9,
+      "raw": "Ausgaben letzter Monat (€)",
+      "normalised": "ausgaben_letzter_monat_eur",
+      "final": "spend_last_month_eur",
+      "action": "renamed"
+    },
+    {
+      "position": 10,
+      "raw": "Zufriedenheit",
+      "normalised": "zufriedenheit",
+      "final": "satisfaction",
+      "action": "renamed"
+    },
+    {
+      "position": 11,
+      "raw": "NPS",
+      "normalised": "nps",
+      "final": "nps",
+      "action": "kept"
+    },
+    {
+      "position": 12,
+      "raw": "Kommentar",
+      "normalised": "kommentar",
+      "final": "comment",
+      "action": "renamed"
+    },
+    {
+      "position": 13,
+      "raw": "Kommentar",
+      "normalised": "kommentar_2",
+      "final": "interviewer_note",
+      "action": "renamed"
+    },
+    {
+      "position": 14,
+      "raw": "",
+      "normalised": "column_14",
+      "final": null,
+      "action": "dropped_empty"
+    }
+  ],
+  "rows": {
+    "read": 1026,
+    "empty": 8,
+    "rejected": 18,
+    "duplicates": 18,
+    "out": 982,
+    "reject_rate": 0.0176817,
+    "max_reject_rate": 0.05,
+    "by_rule": {
+      "age.max": 3,
+      "age.min": 2,
+      "dedupe.exact": 12,
+      "dedupe.key.1": 6,
+      "respondent_id.regex": 2,
+      "respondent_id.required": 1,
+      "start_date.type": 10
+    }
+  },
+  "columns": {
+    "respondent_id": {
+      "type": "string",
+      "source": "profile",
+      "before": {
+        "non_empty": 1017,
+        "null_like": 0,
+        "distinct": 999,
+        "distinct_capped": false,
+        "top": [
+          [
+            "NG-129914",
+            2
+          ],
+          [
+            "NG-189048",
+            2
+          ],
+          [
+            "NG-272155",
+            2
+          ],
+          [
+            "NG-283425",
+            2
+          ],
+          [
+            "NG-448991",
+            2
+          ]
+        ],
+        "min_length": 8,
+        "max_length": 11,
+        "whitespace": 3,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 982,
+        "distinct_capped": false,
+        "min": null,
+        "max": null,
+        "mean": null,
+        "median": null,
+        "top": [
+          [
+            "NG-100388",
+            1
+          ],
+          [
+            "NG-103838",
+            1
+          ],
+          [
+            "NG-104803",
+            1
+          ],
+          [
+            "NG-105420",
+            1
+          ],
+          [
+            "NG-108657",
+            1
+          ]
+        ],
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1017,
+        "null": 1,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 5
+    },
+    "wave": {
+      "type": "integer",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 4,
+        "distinct_capped": false,
+        "top": [
+          [
+            "4",
+            303
+          ],
+          [
+            "2",
+            239
+          ],
+          [
+            "3",
+            239
+          ],
+          [
+            "1",
+            237
+          ]
+        ],
+        "min_length": 1,
+        "max_length": 1,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 4,
+        "distinct_capped": false,
+        "min": 1,
+        "max": 4,
+        "mean": 2.59165,
+        "median": 3.0,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 0
+    },
+    "start_date": {
+      "type": "date",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 755,
+        "distinct_capped": false,
+        "top": [
+          [
+            "16.05.2025",
+            5
+          ],
+          [
+            "06/02/2025",
+            4
+          ],
+          [
+            "08/08/2026",
+            4
+          ],
+          [
+            "12.01.2025",
+            4
+          ],
+          [
+            "12.08.2026",
+            4
+          ]
+        ],
+        "min_length": 5,
+        "max_length": 10,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 479,
+        "distinct_capped": false,
+        "min": "2025-01-07",
+        "max": "2026-08-27",
+        "mean": null,
+        "median": null,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1008,
+        "null": 0,
+        "invalid": 10,
+        "nulled": 0,
+        "patterns": {
+          "%Y-%m-%d": 257,
+          "%d.%m.%Y": 529,
+          "%d/%m/%Y": 222
+        }
+      },
+      "missing": null,
+      "changed_cells": 727
+    },
+    "completed_at": {
+      "type": "datetime",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 1006,
+        "distinct_capped": false,
+        "top": [
+          [
+            "02.06.2025 14:49",
+            2
+          ],
+          [
+            "10.12.2025 15:04",
+            2
+          ],
+          [
+            "11.01.2026 12:08",
+            2
+          ],
+          [
+            "12.11.2025 07:07",
+            2
+          ],
+          [
+            "13.03.2026 10:04",
+            2
+          ]
+        ],
+        "min_length": 16,
+        "max_length": 16,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 982,
+        "distinct_capped": false,
+        "min": "2025-01-08T14:54:00",
+        "max": "2026-08-29T15:18:00",
+        "mean": null,
+        "median": null,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {
+          "%d.%m.%Y %H:%M": 1018
+        }
+      },
+      "missing": null,
+      "changed_cells": 982
+    },
+    "age": {
+      "type": "integer",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 3,
+        "distinct": 74,
+        "distinct_capped": false,
+        "top": [
+          [
+            "63",
+            24
+          ],
+          [
+            "34",
+            23
+          ],
+          [
+            "30",
+            21
+          ],
+          [
+            "55",
+            20
+          ],
+          [
+            "75",
+            20
+          ]
+        ],
+        "min_length": 2,
+        "max_length": 4,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 979,
+        "nulls": 3,
+        "distinct": 68,
+        "distinct_capped": false,
+        "min": 18,
+        "max": 85,
+        "mean": 51.3841,
+        "median": 52.0,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1015,
+        "null": 3,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 3
+    },
+    "gender": {
+      "type": "string",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 8,
+        "distinct_capped": false,
+        "top": [
+          [
+            "W",
+            167
+          ],
+          [
+            "keine Angabe",
+            152
+          ],
+          [
+            "w",
+            146
+          ],
+          [
+            "weiblich",
+            146
+          ],
+          [
+            "divers",
+            139
+          ]
+        ],
+        "min_length": 1,
+        "max_length": 12,
+        "whitespace": 1,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 4,
+        "distinct_capped": false,
+        "min": null,
+        "max": null,
+        "mean": null,
+        "median": null,
+        "top": [
+          [
+            "female",
+            446
+          ],
+          [
+            "male",
+            257
+          ],
+          [
+            "not_stated",
+            145
+          ],
+          [
+            "diverse",
+            134
+          ]
+        ],
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 982
+    },
+    "country": {
+      "type": "string",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 6,
+        "distinct_capped": false,
+        "top": [
+          [
+            "AT",
+            182
+          ],
+          [
+            "de",
+            179
+          ],
+          [
+            "Österreich",
+            177
+          ],
+          [
+            "DE",
+            165
+          ],
+          [
+            "Deutschland",
+            159
+          ]
+        ],
+        "min_length": 2,
+        "max_length": 11,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 3,
+        "distinct_capped": false,
+        "min": null,
+        "max": null,
+        "mean": null,
+        "median": null,
+        "top": [
+          [
+            "DE",
+            484
+          ],
+          [
+            "AT",
+            346
+          ],
+          [
+            "CH",
+            152
+          ]
+        ],
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 647
+    },
+    "household_income": {
+      "type": "number",
+      "source": "profile",
+      "before": {
+        "non_empty": 998,
+        "null_like": 0,
+        "distinct": 374,
+        "distinct_capped": false,
+        "top": [
+          [
+            "41.500,00",
+            9
+          ],
+          [
+            "63.500,00",
+            8
+          ],
+          [
+            "42.500",
+            7
+          ],
+          [
+            "45.000,00",
+            7
+          ],
+          [
+            "49.500,00",
+            7
+          ]
+        ],
+        "min_length": 6,
+        "max_length": 10,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 203,
+        "distinct_capped": false,
+        "min": 18000.0,
+        "max": 119500.0,
+        "mean": 68561.1,
+        "median": 68000.0,
+        "top": null,
+        "filled": 20
+      },
+      "coercion": {
+        "parsed": 998,
+        "null": 20,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": {
+        "strategy": "median",
+        "value": 68000.0,
+        "filled": 20
+      },
+      "changed_cells": 982
+    },
+    "spend_last_month_eur": {
+      "type": "number",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 1000,
+        "distinct_capped": false,
+        "top": [
+          [
+            "1.019,32 €",
+            2
+          ],
+          [
+            "1.187,14 €",
+            2
+          ],
+          [
+            "1.193,33 €",
+            2
+          ],
+          [
+            "1.434,12 €",
+            2
+          ],
+          [
+            "1.523,82 €",
+            2
+          ]
+        ],
+        "min_length": 7,
+        "max_length": 10,
+        "whitespace": 1018,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 982,
+        "distinct_capped": false,
+        "min": 20.41,
+        "max": 2499.31,
+        "mean": 1241.24,
+        "median": 1230.76,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 982
+    },
+    "satisfaction": {
+      "type": "integer",
+      "source": "profile",
+      "before": {
+        "non_empty": 1003,
+        "null_like": 0,
+        "distinct": 10,
+        "distinct_capped": false,
+        "top": [
+          [
+            "7",
+            116
+          ],
+          [
+            "8",
+            113
+          ],
+          [
+            "1",
+            107
+          ],
+          [
+            "3",
+            107
+          ],
+          [
+            "10",
+            105
+          ]
+        ],
+        "min_length": 1,
+        "max_length": 2,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 10,
+        "distinct_capped": false,
+        "min": 1,
+        "max": 10,
+        "mean": 5.60285,
+        "median": 6.0,
+        "top": null,
+        "filled": 15
+      },
+      "coercion": {
+        "parsed": 1003,
+        "null": 15,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": {
+        "strategy": "median",
+        "value": 6,
+        "filled": 15
+      },
+      "changed_cells": 15
+    },
+    "nps": {
+      "type": "integer",
+      "source": "profile",
+      "before": {
+        "non_empty": 1018,
+        "null_like": 0,
+        "distinct": 11,
+        "distinct_capped": false,
+        "top": [
+          [
+            "5",
+            112
+          ],
+          [
+            "0",
+            103
+          ],
+          [
+            "8",
+            103
+          ],
+          [
+            "1",
+            101
+          ],
+          [
+            "7",
+            99
+          ]
+        ],
+        "min_length": 1,
+        "max_length": 2,
+        "whitespace": 0,
+        "non_nfc": 0,
+        "control": 0
+      },
+      "after": {
+        "count": 982,
+        "nulls": 0,
+        "distinct": 11,
+        "distinct_capped": false,
+        "min": 0,
+        "max": 10,
+        "mean": 4.7556,
+        "median": 5.0,
+        "top": null,
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 1018,
+        "null": 0,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 0
+    },
+    "comment": {
+      "type": "string",
+      "source": "profile",
+      "before": {
+        "non_empty": 588,
+        "null_like": 0,
+        "distinct": 15,
+        "distinct_capped": false,
+        "top": [
+          [
+            "Lieferung verspätet, sonst gut",
+            98
+          ],
+          [
+            "Sehr zufrieden mit dem Service",
+            83
+          ],
+          [
+            "Gerne wieder",
+            73
+          ],
+          [
+            "Keine Anmerkungen",
+            68
+          ],
+          [
+            "Mehr Auswahl wäre schön",
+            68
+          ]
+        ],
+        "min_length": 11,
+        "max_length": 31,
+        "whitespace": 2,
+        "non_nfc": 1,
+        "control": 5
+      },
+      "after": {
+        "count": 560,
+        "nulls": 422,
+        "distinct": 8,
+        "distinct_capped": false,
+        "min": null,
+        "max": null,
+        "mean": null,
+        "median": null,
+        "top": [
+          [
+            "Lieferung verspätet, sonst gut",
+            86
+          ],
+          [
+            "Sehr zufrieden mit dem Service",
+            82
+          ],
+          [
+            "Gerne wieder",
+            72
+          ],
+          [
+            "Preis und Leistung stimmen",
+            67
+          ],
+          [
+            "Mehr Auswahl wäre schön",
+            66
+          ]
+        ],
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 588,
+        "null": 430,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 5
+    },
+    "interviewer_note": {
+      "type": "string",
+      "source": "profile",
+      "before": {
+        "non_empty": 253,
+        "null_like": 0,
+        "distinct": 6,
+        "distinct_capped": false,
+        "top": [
+          [
+            "Teilnahme per Tablet",
+            86
+          ],
+          [
+            "Telefon besetzt,  zweiter Versuch",
+            86
+          ],
+          [
+            "Rückruf vereinbart",
+            78
+          ],
+          [
+            "Interview unterbrochen\r\nam Folgetag beendet",
+            1
+          ],
+          [
+            "Rückruf vereinbart\r\nabends erreichbar",
+            1
+          ]
+        ],
+        "min_length": 18,
+        "max_length": 43,
+        "whitespace": 89,
+        "non_nfc": 0,
+        "control": 3
+      },
+      "after": {
+        "count": 245,
+        "nulls": 737,
+        "distinct": 6,
+        "distinct_capped": false,
+        "min": null,
+        "max": null,
+        "mean": null,
+        "median": null,
+        "top": [
+          [
+            "Telefon besetzt,  zweiter Versuch",
+            84
+          ],
+          [
+            "Teilnahme per Tablet",
+            83
+          ],
+          [
+            "Rückruf vereinbart",
+            75
+          ],
+          [
+            "Interview unterbrochen\nam Folgetag beendet",
+            1
+          ],
+          [
+            "Rückruf vereinbart\nabends erreichbar",
+            1
+          ]
+        ],
+        "filled": 0
+      },
+      "coercion": {
+        "parsed": 253,
+        "null": 765,
+        "invalid": 0,
+        "nulled": 0,
+        "patterns": {}
+      },
+      "missing": null,
+      "changed_cells": 3
+    }
+  },
+  "rules": [
+    {
+      "id": "respondent_id.required",
+      "kind": "required",
+      "column": "respondent_id",
+      "parameters": {},
+      "checked": 1018,
+      "failed": 1,
+      "examples": [
+        "r952 \"\""
+      ]
+    },
+    {
+      "id": "respondent_id.regex",
+      "kind": "regex",
+      "column": "respondent_id",
+      "parameters": {
+        "regex": "^NG-\\d{6}$"
+      },
+      "checked": 1017,
+      "failed": 2,
+      "examples": [
+        "r174 \"NG-6346397\"",
+        "r855 \"NG-17261\""
+      ]
+    },
+    {
+      "id": "wave.type",
+      "kind": "type",
+      "column": "wave",
+      "parameters": {
+        "type": "integer",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "wave.required",
+      "kind": "required",
+      "column": "wave",
+      "parameters": {},
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "wave.allowed",
+      "kind": "allowed",
+      "column": "wave",
+      "parameters": {
+        "allowed": [
+          "1",
+          "2",
+          "3",
+          "4"
+        ]
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "start_date.type",
+      "kind": "type",
+      "column": "start_date",
+      "parameters": {
+        "type": "date",
+        "formats": [
+          "%d.%m.%Y",
+          "%Y-%m-%d",
+          "%d/%m/%Y"
+        ]
+      },
+      "checked": 1018,
+      "failed": 10,
+      "examples": [
+        "r66 \"32.01.2025\"",
+        "r233 \"31.02.2025\"",
+        "r480 \"2025-00-10\"",
+        "r578 \"2025-13-01\"",
+        "r711 \"15/13/2025\""
+      ]
+    },
+    {
+      "id": "start_date.required",
+      "kind": "required",
+      "column": "start_date",
+      "parameters": {},
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "completed_at.type",
+      "kind": "type",
+      "column": "completed_at",
+      "parameters": {
+        "type": "datetime",
+        "formats": [
+          "%d.%m.%Y %H:%M"
+        ]
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "completed_at.required",
+      "kind": "required",
+      "column": "completed_at",
+      "parameters": {},
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "age.type",
+      "kind": "type",
+      "column": "age",
+      "parameters": {
+        "type": "integer",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 1015,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "age.min",
+      "kind": "min",
+      "column": "age",
+      "parameters": {
+        "min": "16"
+      },
+      "checked": 1015,
+      "failed": 2,
+      "examples": [
+        "r48 \"15\"",
+        "r76 \"12\""
+      ]
+    },
+    {
+      "id": "age.max",
+      "kind": "max",
+      "column": "age",
+      "parameters": {
+        "max": "99"
+      },
+      "checked": 1015,
+      "failed": 3,
+      "examples": [
+        "r118 \"130\"",
+        "r544 \"150\"",
+        "r871 \"101\""
+      ]
+    },
+    {
+      "id": "gender.allowed",
+      "kind": "allowed",
+      "column": "gender",
+      "parameters": {
+        "allowed": [
+          "female",
+          "male",
+          "diverse",
+          "not_stated"
+        ]
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "country.allowed",
+      "kind": "allowed",
+      "column": "country",
+      "parameters": {
+        "allowed": [
+          "DE",
+          "AT",
+          "CH"
+        ]
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "household_income.type",
+      "kind": "type",
+      "column": "household_income",
+      "parameters": {
+        "type": "number",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 998,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "household_income.min",
+      "kind": "min",
+      "column": "household_income",
+      "parameters": {
+        "min": "0.0"
+      },
+      "checked": 998,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "spend_last_month_eur.type",
+      "kind": "type",
+      "column": "spend_last_month_eur",
+      "parameters": {
+        "type": "number",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "spend_last_month_eur.min",
+      "kind": "min",
+      "column": "spend_last_month_eur",
+      "parameters": {
+        "min": "0.0"
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "satisfaction.type",
+      "kind": "type",
+      "column": "satisfaction",
+      "parameters": {
+        "type": "integer",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 1003,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "satisfaction.min",
+      "kind": "min",
+      "column": "satisfaction",
+      "parameters": {
+        "min": "1"
+      },
+      "checked": 1003,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "satisfaction.max",
+      "kind": "max",
+      "column": "satisfaction",
+      "parameters": {
+        "max": "10"
+      },
+      "checked": 1003,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "nps.type",
+      "kind": "type",
+      "column": "nps",
+      "parameters": {
+        "type": "integer",
+        "decimal": ",",
+        "thousands": "."
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "nps.min",
+      "kind": "min",
+      "column": "nps",
+      "parameters": {
+        "min": "0"
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "nps.max",
+      "kind": "max",
+      "column": "nps",
+      "parameters": {
+        "max": "10"
+      },
+      "checked": 1018,
+      "failed": 0,
+      "examples": []
+    },
+    {
+      "id": "dedupe.exact",
+      "kind": "exact",
+      "column": null,
+      "parameters": {
+        "columns": "all output columns"
+      },
+      "checked": 1000,
+      "failed": 12,
+      "examples": [
+        "r85 duplicate of r80",
+        "r304 duplicate of r124",
+        "r324 duplicate of r181",
+        "r389 duplicate of r41",
+        "r407 duplicate of r189"
+      ]
+    },
+    {
+      "id": "dedupe.key.1",
+      "kind": "key",
+      "column": null,
+      "parameters": {
+        "columns": [
+          "respondent_id"
+        ],
+        "keep": "last",
+        "order_by": "completed_at"
+      },
+      "checked": 988,
+      "failed": 6,
+      "examples": [
+        "r40 superseded by r902",
+        "r190 superseded by r288",
+        "r220 superseded by r687",
+        "r422 superseded by r610",
+        "r528 superseded by r783"
+      ]
+    }
+  ],
+  "dedupe": {
+    "exact": {
+      "checked": 1000,
+      "removed": 12
+    },
+    "keys": [
+      {
+        "id": "dedupe.key.1",
+        "columns": [
+          "respondent_id"
+        ],
+        "keep": "last",
+        "order_by": "completed_at",
+        "checked": 988,
+        "removed": 6
+      }
+    ],
+    "fuzzy": null
+  },
+  "rejects": {
+    "file": "rejects.csv",
+    "rows": 36,
+    "by_stage": {
+      "read": 0,
+      "validate": 18,
+      "dedupe": 18,
+      "missing": 0
+    },
+    "by_rule": {
+      "age.max": 3,
+      "age.min": 2,
+      "dedupe.exact": 12,
+      "dedupe.key.1": 6,
+      "respondent_id.regex": 2,
+      "respondent_id.required": 1,
+      "start_date.type": 10
+    },
+    "by_column": {
+      "age": 5,
+      "respondent_id": 3,
+      "start_date": 10
+    },
+    "preview": [
+      {
+        "source_row": 40,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r902",
+        "values": {
+          "respondent_id": "NG-129914",
+          "wave": "3",
+          "start_date": "07.02.2026",
+          "completed_at": "07.02.2026 17:26",
+          "age": "85",
+          "gender": "w",
+          "country": "AT",
+          "household_income": "79.500,00",
+          "spend_last_month_eur": "1.825,82 €",
+          "satisfaction": "2",
+          "nps": "5",
+          "comment": "",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 48,
+        "stage": "validate",
+        "rule": "age.min",
+        "detail": "age.min: 15 < 16",
+        "values": {
+          "respondent_id": "NG-160720",
+          "wave": "1",
+          "start_date": "11.04.2026",
+          "completed_at": "13.04.2026 10:55",
+          "age": "15",
+          "gender": "m",
+          "country": "AT",
+          "household_income": "71.000",
+          "spend_last_month_eur": "2.322,10 €",
+          "satisfaction": "8",
+          "nps": "10",
+          "comment": "Keine Anmerkungen",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 66,
+        "stage": "validate",
+        "rule": "start_date.type",
+        "detail": "start_date.type: \"32.01.2025\" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",
+        "values": {
+          "respondent_id": "NG-426903",
+          "wave": "1",
+          "start_date": "32.01.2025",
+          "completed_at": "21.08.2025 09:02",
+          "age": "48",
+          "gender": "keine Angabe",
+          "country": "de",
+          "household_income": "41.500",
+          "spend_last_month_eur": "562,09 €",
+          "satisfaction": "1",
+          "nps": "7",
+          "comment": "Sehr zufrieden mit dem Service",
+          "interviewer_note": "Teilnahme per Tablet"
+        }
+      },
+      {
+        "source_row": 76,
+        "stage": "validate",
+        "rule": "age.min",
+        "detail": "age.min: 12 < 16",
+        "values": {
+          "respondent_id": "NG-679587",
+          "wave": "3",
+          "start_date": "22.12.2025",
+          "completed_at": "22.12.2025 17:36",
+          "age": "12",
+          "gender": "männlich",
+          "country": "Österreich",
+          "household_income": "81.500",
+          "spend_last_month_eur": "2.489,90 €",
+          "satisfaction": "8",
+          "nps": "0",
+          "comment": "Alles prima",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 85,
+        "stage": "dedupe",
+        "rule": "dedupe.exact",
+        "detail": "duplicate of r80",
+        "values": {
+          "respondent_id": "NG-928448",
+          "wave": "3",
+          "start_date": "12.11.2025",
+          "completed_at": "12.11.2025 07:07",
+          "age": "63",
+          "gender": "weiblich",
+          "country": "Schweiz",
+          "household_income": "49.500,00",
+          "spend_last_month_eur": "1.187,14 €",
+          "satisfaction": "10",
+          "nps": "1",
+          "comment": "Lieferung verspätet,  sonst gut",
+          "interviewer_note": "Rückruf vereinbart"
+        }
+      },
+      {
+        "source_row": 118,
+        "stage": "validate",
+        "rule": "age.max",
+        "detail": "age.max: 130 > 99",
+        "values": {
+          "respondent_id": "NG-774006",
+          "wave": "4",
+          "start_date": "12/02/2026",
+          "completed_at": "13.02.2026 14:37",
+          "age": "130",
+          "gender": "divers",
+          "country": "de",
+          "household_income": "48.000",
+          "spend_last_month_eur": "1.413,39 €",
+          "satisfaction": "1",
+          "nps": "7",
+          "comment": "",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 174,
+        "stage": "validate",
+        "rule": "respondent_id.regex",
+        "detail": "respondent_id.regex: \"NG-6346397\" does not match ^NG-\\d{6}$",
+        "values": {
+          "respondent_id": "NG-6346397",
+          "wave": "1",
+          "start_date": "07/11/2025",
+          "completed_at": "07.11.2025 10:34",
+          "age": "63",
+          "gender": "weiblich",
+          "country": "AT",
+          "household_income": "89.500",
+          "spend_last_month_eur": "557,51 €",
+          "satisfaction": "3",
+          "nps": "4",
+          "comment": "Mehr Auswahl wäre schön",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 190,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r288",
+        "values": {
+          "respondent_id": "NG-283425",
+          "wave": "4",
+          "start_date": "11.02.2026",
+          "completed_at": "11.02.2026 21:14",
+          "age": "56",
+          "gender": "divers",
+          "country": "Deutschland",
+          "household_income": "108.500,00",
+          "spend_last_month_eur": "736,04 €",
+          "satisfaction": "10",
+          "nps": "1",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": "Telefon besetzt,  zweiter Versuch"
+        }
+      },
+      {
+        "source_row": 220,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r687",
+        "values": {
+          "respondent_id": "NG-798099",
+          "wave": "3",
+          "start_date": "20.06.2025",
+          "completed_at": "20.06.2025 14:19",
+          "age": "73",
+          "gender": "keine Angabe",
+          "country": "AT",
+          "household_income": "43.500",
+          "spend_last_month_eur": "1.742,42 €",
+          "satisfaction": "1",
+          "nps": "8",
+          "comment": "",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 233,
+        "stage": "validate",
+        "rule": "start_date.type",
+        "detail": "start_date.type: \"31.02.2025\" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",
+        "values": {
+          "respondent_id": "NG-679621",
+          "wave": "2",
+          "start_date": "31.02.2025",
+          "completed_at": "11.11.2025 20:46",
+          "age": "37",
+          "gender": "männlich",
+          "country": "Österreich",
+          "household_income": "60.000",
+          "spend_last_month_eur": "2.042,77 €",
+          "satisfaction": "7",
+          "nps": "9",
+          "comment": "Fragebogen war zu lang",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 304,
+        "stage": "dedupe",
+        "rule": "dedupe.exact",
+        "detail": "duplicate of r124",
+        "values": {
+          "respondent_id": "NG-272155",
+          "wave": "4",
+          "start_date": "17.02.2026",
+          "completed_at": "19.02.2026 17:41",
+          "age": "85",
+          "gender": "w",
+          "country": "Österreich",
+          "household_income": "47.000,00",
+          "spend_last_month_eur": "1.603,66 €",
+          "satisfaction": "2",
+          "nps": "7",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 324,
+        "stage": "dedupe",
+        "rule": "dedupe.exact",
+        "detail": "duplicate of r181",
+        "values": {
+          "respondent_id": "NG-761426",
+          "wave": "2",
+          "start_date": "16.04.2025",
+          "completed_at": "16.04.2025 15:13",
+          "age": "30",
+          "gender": "weiblich",
+          "country": "DE",
+          "household_income": "51.500",
+          "spend_last_month_eur": "83,23 €",
+          "satisfaction": "4",
+          "nps": "8",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 389,
+        "stage": "dedupe",
+        "rule": "dedupe.exact",
+        "detail": "duplicate of r41",
+        "values": {
+          "respondent_id": "NG-547873",
+          "wave": "3",
+          "start_date": "10.01.2026",
+          "completed_at": "11.01.2026 12:08",
+          "age": "84",
+          "gender": "keine Angabe",
+          "country": "DE",
+          "household_income": "54.000",
+          "spend_last_month_eur": "781,01 €",
+          "satisfaction": "10",
+          "nps": "0",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 407,
+        "stage": "dedupe",
+        "rule": "dedupe.exact",
+        "detail": "duplicate of r189",
+        "values": {
+          "respondent_id": "NG-801086",
+          "wave": "2",
+          "start_date": "10.12.2025",
+          "completed_at": "10.12.2025 15:04",
+          "age": "67",
+          "gender": "W",
+          "country": "Deutschland",
+          "household_income": "106.000",
+          "spend_last_month_eur": "1.561,15 €",
+          "satisfaction": "1",
+          "nps": "3",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 422,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r610",
+        "values": {
+          "respondent_id": "NG-959125",
+          "wave": "1",
+          "start_date": "02.01.2026",
+          "completed_at": "03.01.2026 12:42",
+          "age": "25",
+          "gender": "m",
+          "country": "de",
+          "household_income": "106.500",
+          "spend_last_month_eur": "311,88 €",
+          "satisfaction": "5",
+          "nps": "4",
+          "comment": "Gerne wieder",
+          "interviewer_note": "Rückruf vereinbart"
+        }
+      },
+      {
+        "source_row": 480,
+        "stage": "validate",
+        "rule": "start_date.type",
+        "detail": "start_date.type: \"2025-00-10\" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",
+        "values": {
+          "respondent_id": "NG-520961",
+          "wave": "4",
+          "start_date": "2025-00-10",
+          "completed_at": "11.01.2025 08:18",
+          "age": "74",
+          "gender": "w",
+          "country": "DE",
+          "household_income": "80.000",
+          "spend_last_month_eur": "2.466,43 €",
+          "satisfaction": "2",
+          "nps": "9",
+          "comment": "Keine Anmerkungen",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 528,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r783",
+        "values": {
+          "respondent_id": "NG-960378",
+          "wave": "4",
+          "start_date": "06/07/2025",
+          "completed_at": "06.07.2025 21:23",
+          "age": "45",
+          "gender": "weiblich",
+          "country": "AT",
+          "household_income": "79.000,00",
+          "spend_last_month_eur": "1.523,82 €",
+          "satisfaction": "10",
+          "nps": "7",
+          "comment": "",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 544,
+        "stage": "validate",
+        "rule": "age.max",
+        "detail": "age.max: 150 > 99",
+        "values": {
+          "respondent_id": "NG-762228",
+          "wave": "2",
+          "start_date": "07.09.2025",
+          "completed_at": "08.09.2025 11:21",
+          "age": "150",
+          "gender": "keine Angabe",
+          "country": "de",
+          "household_income": "53.000,00",
+          "spend_last_month_eur": "1.930,34 €",
+          "satisfaction": "5",
+          "nps": "6",
+          "comment": "Gerne wieder",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 578,
+        "stage": "validate",
+        "rule": "start_date.type",
+        "detail": "start_date.type: \"2025-13-01\" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",
+        "values": {
+          "respondent_id": "NG-920527",
+          "wave": "1",
+          "start_date": "2025-13-01",
+          "completed_at": "11.07.2025 20:26",
+          "age": "34",
+          "gender": "männlich",
+          "country": "Schweiz",
+          "household_income": "75.000,00",
+          "spend_last_month_eur": "1.778,66 €",
+          "satisfaction": "7",
+          "nps": "7",
+          "comment": "Alles prima",
+          "interviewer_note": ""
+        }
+      },
+      {
+        "source_row": 583,
+        "stage": "dedupe",
+        "rule": "dedupe.key.1",
+        "detail": "duplicate of r673",
+        "values": {
+          "respondent_id": "NG-649809",
+          "wave": "2",
+          "start_date": "26.04.2025",
+          "completed_at": "26.04.2025 09:34",
+          "age": "41",
+          "gender": "W",
+          "country": "Deutschland",
+          "household_income": "98.000,00",
+          "spend_last_month_eur": "1.958,11 €",
+          "satisfaction": "5",
+          "nps": "8",
+          "comment": "Lieferung verspätet, sonst gut",
+          "interviewer_note": "Telefon besetzt,  zweiter Versuch"
+        }
+      }
+    ]
+  },
+  "warnings": [],
+  "notes": [
+    {
+      "code": "structure.empty_columns_dropped",
+      "message": "empty columns dropped: column_14",
+      "count": 1
+    },
+    {
+      "code": "structure.repeated_headers",
+      "message": "repeated headers numbered: kommentar_2",
+      "count": 1
+    }
+  ],
+  "explain": null,
+  "banner": "Demo with invented data for a fictional company",
+  "footer": "Rebuilt from memory as a demo. The original client's name and data are not used."
+}

@@ -1,0 +1,37 @@
+_source_row,_stage,_rule,_detail,respondent_id,wave,start_date,completed_at,age,gender,country,household_income,spend_last_month_eur,satisfaction,nps,comment,interviewer_note
+40,dedupe,dedupe.key.1,duplicate of r902,NG-129914,3,07.02.2026,07.02.2026 17:26,85,w,AT,"79.500,00","1.825,82 €",2,5,,
+48,validate,age.min,age.min: 15 < 16,NG-160720,1,11.04.2026,13.04.2026 10:55,15,m,AT,71.000,"2.322,10 €",8,10,Keine Anmerkungen,
+66,validate,start_date.type,"start_date.type: ""32.01.2025"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-426903,1,32.01.2025,21.08.2025 09:02,48,keine Angabe,de,41.500,"562,09 €",1,7,Sehr zufrieden mit dem Service,Teilnahme per Tablet
+76,validate,age.min,age.min: 12 < 16,NG-679587,3,22.12.2025,22.12.2025 17:36,12,männlich,Österreich,81.500,"2.489,90 €",8,0,Alles prima,
+85,dedupe,dedupe.exact,duplicate of r80,NG-928448,3,12.11.2025,12.11.2025 07:07,63,weiblich,Schweiz,"49.500,00","1.187,14 €",10,1,"Lieferung verspätet,  sonst gut",Rückruf vereinbart
+118,validate,age.max,age.max: 130 > 99,NG-774006,4,12/02/2026,13.02.2026 14:37,130,divers,de,48.000,"1.413,39 €",1,7,,
+174,validate,respondent_id.regex,"respondent_id.regex: ""NG-6346397"" does not match ^NG-\d{6}$",NG-6346397,1,07/11/2025,07.11.2025 10:34,63,weiblich,AT,89.500,"557,51 €",3,4,Mehr Auswahl wäre schön,
+190,dedupe,dedupe.key.1,duplicate of r288,NG-283425,4,11.02.2026,11.02.2026 21:14,56,divers,Deutschland,"108.500,00","736,04 €",10,1,"Lieferung verspätet, sonst gut","Telefon besetzt,  zweiter Versuch"
+220,dedupe,dedupe.key.1,duplicate of r687,NG-798099,3,20.06.2025,20.06.2025 14:19,73,keine Angabe,AT,43.500,"1.742,42 €",1,8,,
+233,validate,start_date.type,"start_date.type: ""31.02.2025"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-679621,2,31.02.2025,11.11.2025 20:46,37,männlich,Österreich,60.000,"2.042,77 €",7,9,Fragebogen war zu lang,
+304,dedupe,dedupe.exact,duplicate of r124,NG-272155,4,17.02.2026,19.02.2026 17:41,85,w,Österreich,"47.000,00","1.603,66 €",2,7,"Lieferung verspätet, sonst gut",
+324,dedupe,dedupe.exact,duplicate of r181,NG-761426,2,16.04.2025,16.04.2025 15:13,30,weiblich,DE,51.500,"83,23 €",4,8,"Lieferung verspätet, sonst gut",
+389,dedupe,dedupe.exact,duplicate of r41,NG-547873,3,10.01.2026,11.01.2026 12:08,84,keine Angabe,DE,54.000,"781,01 €",10,0,"Lieferung verspätet, sonst gut",
+407,dedupe,dedupe.exact,duplicate of r189,NG-801086,2,10.12.2025,10.12.2025 15:04,67,W,Deutschland,106.000,"1.561,15 €",1,3,"Lieferung verspätet, sonst gut",
+422,dedupe,dedupe.key.1,duplicate of r610,NG-959125,1,02.01.2026,03.01.2026 12:42,25,m,de,106.500,"311,88 €",5,4,Gerne wieder,Rückruf vereinbart
+480,validate,start_date.type,"start_date.type: ""2025-00-10"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-520961,4,2025-00-10,11.01.2025 08:18,74,w,DE,80.000,"2.466,43 €",2,9,Keine Anmerkungen,
+528,dedupe,dedupe.key.1,duplicate of r783,NG-960378,4,06/07/2025,06.07.2025 21:23,45,weiblich,AT,"79.000,00","1.523,82 €",10,7,,
+544,validate,age.max,age.max: 150 > 99,NG-762228,2,07.09.2025,08.09.2025 11:21,150,keine Angabe,de,"53.000,00","1.930,34 €",5,6,Gerne wieder,
+578,validate,start_date.type,"start_date.type: ""2025-13-01"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-920527,1,2025-13-01,11.07.2025 20:26,34,männlich,Schweiz,"75.000,00","1.778,66 €",7,7,Alles prima,
+583,dedupe,dedupe.key.1,duplicate of r673,NG-649809,2,26.04.2025,26.04.2025 09:34,41,W,Deutschland,"98.000,00","1.958,11 €",5,8,"Lieferung verspätet, sonst gut","Telefon besetzt,  zweiter Versuch"
+632,dedupe,dedupe.exact,duplicate of r145,NG-940367,4,23.04.2025,23.04.2025 16:09,63,  W ,DE,"78.000,00","1.434,12 €",5,3,"Lieferung verspätet, sonst gut",
+664,dedupe,dedupe.exact,duplicate of r157,NG-189048,4,13.01.2025,14.01.2025 20:26,34,m,de,"80.500,00","2.295,45 €",2,6,"Lieferung verspätet, sonst gut",
+709,dedupe,dedupe.exact,duplicate of r704,NG-448991,2,15/11/2025,17.11.2025 13:52,50,männlich,Deutschland,"49.000,00","1.193,33 €",5,5,"Lieferung verspätet, sonst gut",
+711,validate,start_date.type,"start_date.type: ""15/13/2025"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-431356,4,15/13/2025,28.01.2026 13:28,19,weiblich,Österreich,"106.500,00","631,84 €",2,3,Keine Anmerkungen,
+772,dedupe,dedupe.exact,duplicate of r531,NG-477408,3,11.03.2026,13.03.2026 10:04,59,m,Österreich,"38.500,00","1.660,94 €",6,7,"Lieferung verspätet, sonst gut",Rückruf vereinbart
+790,validate,start_date.type,"start_date.type: ""2025-02-30"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-486931,4,2025-02-30,06.07.2025 08:37,48,divers,de,92.500,"742,18 €",2,3,Fragebogen war zu lang,
+813,validate,start_date.type,"start_date.type: ""30.02.2026"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-822541,4,30.02.2026,04.01.2026 11:40,43,keine Angabe,DE,26.500,"465,18 €",1,0,,
+846,dedupe,dedupe.exact,duplicate of r225,NG-655844,4,2025-06-02,02.06.2025 14:49,31,keine Angabe,Österreich,"19.500,00","2.050,13 €",4,7,"Lieferung verspätet, sonst gut",
+849,validate,start_date.type,"start_date.type: ""00.05.2025"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-427404,3,00.05.2025,05.09.2025 16:34,81,m,Österreich,"99.000,00","1.789,69 €",6,5,,Teilnahme per Tablet
+855,validate,respondent_id.regex,"respondent_id.regex: ""NG-17261"" does not match ^NG-\d{6}$",NG-17261,1,04.09.2025,06.09.2025 21:14,69,W,Schweiz,"29.000,00","1.998,43 €",9,5,,
+871,validate,age.max,age.max: 101 > 99,NG-771456,4,2026-08-05,07.08.2026 09:18,101,w,Schweiz,"102.000,00","1.322,37 €",3,5,"Lieferung verspätet, sonst gut",
+940,validate,start_date.type,"start_date.type: ""heute"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-205533,4,heute,16.06.2025 14:28,61,keine Angabe,de,95.000,"2.499,86 €",10,9,Mehr Auswahl wäre schön,
+948,dedupe,dedupe.exact,duplicate of r758,NG-765489,2,14/06/2025,15.06.2025 18:01,73,m,DE,116.500,"791,00 €",8,2,"Lieferung verspätet, sonst gut",
+952,validate,respondent_id.required,respondent_id.required: empty,,1,07.05.2025,09.05.2025 19:30,56,weiblich,Deutschland,88.500,"1.953,10 €",4,6,,
+964,dedupe,dedupe.exact,duplicate of r453,NG-673958,1,26/03/2026,26.03.2026 10:28,61,divers,de,35.000,"1.019,32 €",3,5,"Lieferung verspätet, sonst gut",
+1013,validate,start_date.type,"start_date.type: ""gestern"" not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)",NG-724708,4,gestern,23.02.2026 19:44,45,divers,AT,40.000,"288,15 €",3,6,Mehr Auswahl wäre schön,Teilnahme per Tablet

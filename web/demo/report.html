@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<title>Survey wave export, German locale</title>
+<script>
+try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); } catch (e) {}
+</script>
+<style>
+/* Inlined into every HTML report. Token values mirror web/kit/tokens.css (tests/unit/test_report.py checks). */
+:root {
+  color-scheme: dark;
+  --bg: #0B0F14;
+  --surface: #121820;
+  --surface-2: #182130;
+  --border: #1F2A36;
+  --text: #E6EDF3;
+  --muted: #93A1B0;
+  --accent: #F2A93B;
+  --accent-fg: #1A1200;
+  --ok: #3DDC97;
+  --warn: #FACC15;
+  --danger: #F87171;
+  --info: #5EC8F2;
+  --font-text: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "Cascadia Code", Consolas, "Liberation Mono", monospace;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --bg: #F7F7F4;
+    --surface: #FFFFFF;
+    --surface-2: #F0EFEA;
+    --border: #DDD9D0;
+    --text: #14181D;
+    --muted: #5B6472;
+    --accent: #B45309;
+    --accent-fg: #FFFFFF;
+    --ok: #15803D;
+    --warn: #A16207;
+    --danger: #B91C1C;
+    --info: #0369A1;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F7F7F4;
+  --surface: #FFFFFF;
+  --surface-2: #F0EFEA;
+  --border: #DDD9D0;
+  --text: #14181D;
+  --muted: #5B6472;
+  --accent: #B45309;
+  --accent-fg: #FFFFFF;
+  --ok: #15803D;
+  --warn: #A16207;
+  --danger: #B91C1C;
+  --info: #0369A1;
+}
+@media print {
+  :root, :root[data-theme="dark"] {
+    color-scheme: light;
+    --bg: #FFFFFF;
+    --surface: #FFFFFF;
+    --surface-2: #F0EFEA;
+    --border: #DDD9D0;
+    --text: #14181D;
+    --muted: #5B6472;
+    --accent: #B45309;
+    --accent-fg: #FFFFFF;
+    --ok: #15803D;
+    --warn: #A16207;
+    --danger: #B91C1C;
+    --info: #0369A1;
+  }
+  .theme-toggle { display: none; }
+  details { display: block; }
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.5 var(--font-text);
+}
+main { max-width: 1120px; margin: 0 auto; padding: 24px max(16px, env(safe-area-inset-left)) 48px; }
+h1, h2, h3 { line-height: 1.25; text-wrap: balance; }
+h1 { font-size: 28px; margin: 0 0 8px; }
+h2 { font-size: 20px; margin: 40px 0 12px; padding-top: 8px; border-top: 1px solid var(--border); }
+h3 { font-size: 16px; margin: 20px 0 8px; }
+p { margin: 0 0 12px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+code, pre, .mono { font-family: var(--font-mono); font-size: 14px; }
+pre {
+  margin: 0;
+  padding: 12px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  white-space: pre;
+}
+.banner {
+  margin: 0 0 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  background: var(--surface);
+  font-size: 14px;
+}
+.top { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.meta { color: var(--muted); font-size: 14px; margin: 0; }
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font: 12px/1.6 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  vertical-align: middle;
+}
+.badge--ok { color: var(--ok); }
+.badge--warn { color: var(--warn); }
+.badge--danger { color: var(--danger); }
+.badge--info { color: var(--info); }
+.theme-toggle {
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0 0; }
+.kpi {
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.kpi__label { margin: 0; color: var(--muted); font: 12px/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: .06em; }
+.kpi__value { margin: 4px 0 0; font: 28px/1.2 var(--font-mono); font-variant-numeric: tabular-nums; }
+.flow { width: 100%; height: 40px; display: block; border-radius: var(--radius-sm); }
+.seg--out { fill: var(--ok); }
+.seg--read { fill: var(--danger); }
+.seg--validate { fill: var(--warn); }
+.seg--missing { fill: var(--info); }
+.seg--duplicates { fill: var(--accent); }
+.seg--empty { fill: var(--muted); }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 20px; margin: 10px 0 0; padding: 0; list-style: none; font-size: 14px; }
+.swatch { display: inline-block; width: 12px; height: 12px; margin-right: 6px; border-radius: 3px; vertical-align: -1px; }
+.swatch.seg--out { background: var(--ok); }
+.swatch.seg--read { background: var(--danger); }
+.swatch.seg--validate { background: var(--warn); }
+.swatch.seg--missing { background: var(--info); }
+.swatch.seg--duplicates { background: var(--accent); }
+.swatch.seg--empty { background: var(--muted); }
+.table-wrap { overflow-x: auto; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 6px 10px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font: 12px/1.4 var(--font-mono); text-transform: uppercase; letter-spacing: .04em; background: var(--surface); }
+tbody tr:nth-child(even) td { background: var(--surface-2); }
+tbody tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+td.cell { font-family: var(--font-mono); white-space: pre-wrap; word-break: break-word; }
+.muted { color: var(--muted); }
+.warn { color: var(--warn); }
+ul.plain { margin: 0; padding-left: 20px; }
+details { margin: 4px 0 0; }
+summary { cursor: pointer; color: var(--text); text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.18em; }
+.warnings li { margin: 0 0 4px; }
+footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; }
+@media (max-width: 480px) {
+  h1 { font-size: 24px; }
+  .kpi__value { font-size: 24px; }
+}
+
+</style>
+</head>
+<body>
+<main>
+<p class="banner">Demo with invented data for a fictional company</p>
+<header class="top">
+  <div>
+    <h1>Survey wave export, German locale
+ <span class="badge badge--ok">Passed</span>    </h1>
+    <p class="meta">
+      input <code>01_survey_export_de.csv</code>
+      &middot; profile <code>01_survey.yaml</code> (survey-de)
+      &middot; mode in-memory      &middot; clean-data 0.1.0
+    </p>
+  </div>
+  <button class="theme-toggle" type="button" onclick="var r=document.documentElement,n=(r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'))==='light'?'dark':'light';r.setAttribute('data-theme',n);try{localStorage.setItem('hh-theme',n)}catch(e){}">Theme</button>
+</header>
+
+<section aria-label="Key figures">
+  <div class="kpis">
+    <div class="kpi"><p class="kpi__label">Read</p><p class="kpi__value">1,026</p></div>
+    <div class="kpi"><p class="kpi__label">Out</p><p class="kpi__value">982</p></div>
+    <div class="kpi"><p class="kpi__label">Rejected</p><p class="kpi__value">18</p></div>
+    <div class="kpi"><p class="kpi__label">Duplicates</p><p class="kpi__value">18</p></div>
+    <div class="kpi"><p class="kpi__label">Cells changed</p><p class="kpi__value">5,333</p></div>
+    <div class="kpi"><p class="kpi__label">Columns</p><p class="kpi__value">13</p></div>
+  </div>
+</section>
+
+<h2 id="flow">Row flow</h2>
+<p>read 1,026 = out 982 + rejected 18 + duplicates 18 + empty 8. Reject rate 1.8 % against a gate of 5.0 %.</p>
+<svg class="flow" viewBox="0 0 1000 40" preserveAspectRatio="none" role="img" aria-label="Row flow: kept 982, rejected by validation 18, duplicates 18, empty records 8">
+  <rect class="seg--out" x="0.0" y="0" width="957.12" height="40"><title>kept: 982</title></rect>
+  <rect class="seg--validate" x="957.12" y="0" width="17.54" height="40"><title>rejected by validation: 18</title></rect>
+  <rect class="seg--duplicates" x="974.66" y="0" width="17.54" height="40"><title>duplicates: 18</title></rect>
+  <rect class="seg--empty" x="992.2" y="0" width="7.8" height="40"><title>empty records: 8</title></rect>
+</svg>
+<ul class="legend">
+  <li><span class="swatch seg--out" aria-hidden="true"></span>kept 982</li>
+  <li><span class="swatch seg--validate" aria-hidden="true"></span>rejected by validation 18</li>
+  <li><span class="swatch seg--duplicates" aria-hidden="true"></span>duplicates 18</li>
+  <li><span class="swatch seg--empty" aria-hidden="true"></span>empty records 8</li>
+</ul>
+
+<h2 id="warnings">Warnings</h2>
+<p class="muted">No warnings.</p>
+<p class="muted">Notes:</p>
+<ul class="plain muted">
+  <li><code>structure.empty_columns_dropped</code> empty columns dropped: column_14</li>
+  <li><code>structure.repeated_headers</code> repeated headers numbered: kommentar_2</li>
+</ul>
+
+
+<h2 id="headers">Header mapping</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col" class="num">#</th><th scope="col">Raw</th><th scope="col">Normalised</th><th scope="col">Final</th><th scope="col">Action</th></tr></thead>
+  <tbody>
+    <tr><td class="num">1</td><td>Respondent ID</td><td><code>respondent_id</code></td><td><code>respondent_id</code></td><td>kept</td></tr>
+    <tr><td class="num">2</td><td>Welle</td><td><code>welle</code></td><td><code>wave</code></td><td>renamed</td></tr>
+    <tr><td class="num">3</td><td>Startdatum</td><td><code>startdatum</code></td><td><code>start_date</code></td><td>renamed</td></tr>
+    <tr><td class="num">4</td><td>Abgeschlossen am</td><td><code>abgeschlossen_am</code></td><td><code>completed_at</code></td><td>renamed</td></tr>
+    <tr><td class="num">5</td><td>Alter</td><td><code>alter</code></td><td><code>age</code></td><td>renamed</td></tr>
+    <tr><td class="num">6</td><td>Geschlecht</td><td><code>geschlecht</code></td><td><code>gender</code></td><td>renamed</td></tr>
+    <tr><td class="num">7</td><td>Land</td><td><code>land</code></td><td><code>country</code></td><td>renamed</td></tr>
+    <tr><td class="num">8</td><td>Haushaltseinkommen (€)</td><td><code>haushaltseinkommen_eur</code></td><td><code>household_income</code></td><td>renamed</td></tr>
+    <tr><td class="num">9</td><td>Ausgaben letzter Monat (€)</td><td><code>ausgaben_letzter_monat_eur</code></td><td><code>spend_last_month_eur</code></td><td>renamed</td></tr>
+    <tr><td class="num">10</td><td>Zufriedenheit</td><td><code>zufriedenheit</code></td><td><code>satisfaction</code></td><td>renamed</td></tr>
+    <tr><td class="num">11</td><td>NPS</td><td><code>nps</code></td><td><code>nps</code></td><td>kept</td></tr>
+    <tr><td class="num">12</td><td>Kommentar</td><td><code>kommentar</code></td><td><code>comment</code></td><td>renamed</td></tr>
+    <tr><td class="num">13</td><td>Kommentar</td><td><code>kommentar_2</code></td><td><code>interviewer_note</code></td><td>renamed</td></tr>
+    <tr><td class="num">14</td><td></td><td><code>column_14</code></td><td><code></code></td><td>dropped empty</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="columns">Columns before and after</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col" class="num">Non-empty before</th><th scope="col" class="num">Nulls after</th><th scope="col" class="num">Distinct after</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Filled</th><th scope="col" class="num">Changed</th><th scope="col">Details</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>respondent_id</code></td><td>string</td>
+      <td class="num">1,017</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">5</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 3 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 8 to 11</p>
+          <p>top before: <code>"NG-129914"</code> &times;2, <code>"NG-189048"</code> &times;2, <code>"NG-272155"</code> &times;2, <code>"NG-283425"</code> &times;2, <code>"NG-448991"</code> &times;2</p>
+          <p>after: min – &middot; max – &middot; mean – &middot; median –</p>
+          <p>top after: <code>"NG-100388"</code> &times;1, <code>"NG-103838"</code> &times;1, <code>"NG-104803"</code> &times;1, <code>"NG-105420"</code> &times;1, <code>"NG-108657"</code> &times;1</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>wave</code></td><td>integer</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 1 to 1</p>
+          <p>top before: <code>"4"</code> &times;303, <code>"2"</code> &times;239, <code>"3"</code> &times;239, <code>"1"</code> &times;237</p>
+          <p>after: min 1 &middot; max 4 &middot; mean 2.59165 &middot; median 3</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>start_date</code></td><td>date</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">479</td>
+      <td class="num">10</td>
+      <td class="num">0</td>
+      <td class="num">727</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 5 to 10</p>
+          <p>top before: <code>"16.05.2025"</code> &times;5, <code>"06/02/2025"</code> &times;4, <code>"08/08/2026"</code> &times;4, <code>"12.01.2025"</code> &times;4, <code>"12.08.2026"</code> &times;4</p>
+          <p>after: min 2025-01-07 &middot; max 2026-08-27 &middot; mean – &middot; median –</p>
+          <p>patterns: <code>%Y-%m-%d</code> 257, <code>%d.%m.%Y</code> 529, <code>%d/%m/%Y</code> 222</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>completed_at</code></td><td>datetime</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 16 to 16</p>
+          <p>top before: <code>"02.06.2025 14:49"</code> &times;2, <code>"10.12.2025 15:04"</code> &times;2, <code>"11.01.2026 12:08"</code> &times;2, <code>"12.11.2025 07:07"</code> &times;2, <code>"13.03.2026 10:04"</code> &times;2</p>
+          <p>after: min 2025-01-08T14:54:00 &middot; max 2026-08-29T15:18:00 &middot; mean – &middot; median –</p>
+          <p>patterns: <code>%d.%m.%Y %H:%M</code> 1,018</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>age</code></td><td>integer</td>
+      <td class="num">1,018</td>
+      <td class="num">3</td>
+      <td class="num">68</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">3</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 3 &middot; length 2 to 4</p>
+          <p>top before: <code>"63"</code> &times;24, <code>"34"</code> &times;23, <code>"30"</code> &times;21, <code>"55"</code> &times;20, <code>"75"</code> &times;20</p>
+          <p>after: min 18 &middot; max 85 &middot; mean 51.3841 &middot; median 52</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>gender</code></td><td>string</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">4</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 1 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 1 to 12</p>
+          <p>top before: <code>"W"</code> &times;167, <code>"keine Angabe"</code> &times;152, <code>"w"</code> &times;146, <code>"weiblich"</code> &times;146, <code>"divers"</code> &times;139</p>
+          <p>after: min – &middot; max – &middot; mean – &middot; median –</p>
+          <p>top after: <code>"female"</code> &times;446, <code>"male"</code> &times;257, <code>"not_stated"</code> &times;145, <code>"diverse"</code> &times;134</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>country</code></td><td>string</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">3</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">647</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 2 to 11</p>
+          <p>top before: <code>"AT"</code> &times;182, <code>"de"</code> &times;179, <code>"\u00d6sterreich"</code> &times;177, <code>"DE"</code> &times;165, <code>"Deutschland"</code> &times;159</p>
+          <p>after: min – &middot; max – &middot; mean – &middot; median –</p>
+          <p>top after: <code>"DE"</code> &times;484, <code>"AT"</code> &times;346, <code>"CH"</code> &times;152</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>household_income</code></td><td>number</td>
+      <td class="num">998</td>
+      <td class="num">0</td>
+      <td class="num">203</td>
+      <td class="num">0</td>
+      <td class="num">20</td>
+      <td class="num">982</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 6 to 10</p>
+          <p>top before: <code>"41.500,00"</code> &times;9, <code>"63.500,00"</code> &times;8, <code>"42.500"</code> &times;7, <code>"45.000,00"</code> &times;7, <code>"49.500,00"</code> &times;7</p>
+          <p>after: min 18,000 &middot; max 119,500 &middot; mean 68,561.1 &middot; median 68,000</p>
+          <p>missing: median with 68000.0, 20 filled</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>spend_last_month_eur</code></td><td>number</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">982</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 1018 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 7 to 10</p>
+          <p>top before: <code>"1.019,32\u00a0\u20ac"</code> &times;2, <code>"1.187,14\u00a0\u20ac"</code> &times;2, <code>"1.193,33\u00a0\u20ac"</code> &times;2, <code>"1.434,12\u00a0\u20ac"</code> &times;2, <code>"1.523,82\u00a0\u20ac"</code> &times;2</p>
+          <p>after: min 20.41 &middot; max 2,499.31 &middot; mean 1,241.24 &middot; median 1,230.76</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>satisfaction</code></td><td>integer</td>
+      <td class="num">1,003</td>
+      <td class="num">0</td>
+      <td class="num">10</td>
+      <td class="num">0</td>
+      <td class="num">15</td>
+      <td class="num">15</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 1 to 2</p>
+          <p>top before: <code>"7"</code> &times;116, <code>"8"</code> &times;113, <code>"1"</code> &times;107, <code>"3"</code> &times;107, <code>"10"</code> &times;105</p>
+          <p>after: min 1 &middot; max 10 &middot; mean 5.60285 &middot; median 6</p>
+          <p>missing: median with 6, 15 filled</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>nps</code></td><td>integer</td>
+      <td class="num">1,018</td>
+      <td class="num">0</td>
+      <td class="num">11</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 0 &middot; non-NFC 0 &middot; control 0 &middot; null-like 0 &middot; length 1 to 2</p>
+          <p>top before: <code>"5"</code> &times;112, <code>"0"</code> &times;103, <code>"8"</code> &times;103, <code>"1"</code> &times;101, <code>"7"</code> &times;99</p>
+          <p>after: min 0 &middot; max 10 &middot; mean 4.7556 &middot; median 5</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>comment</code></td><td>string</td>
+      <td class="num">588</td>
+      <td class="num">422</td>
+      <td class="num">8</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">5</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 2 &middot; non-NFC 1 &middot; control 5 &middot; null-like 0 &middot; length 11 to 31</p>
+          <p>top before: <code>"Lieferung versp\u00e4tet, sonst gut"</code> &times;98, <code>"Sehr zufrieden mit dem Service"</code> &times;83, <code>"Gerne wieder"</code> &times;73, <code>"Keine Anmerkungen"</code> &times;68, <code>"Mehr Auswahl w\u00e4re sch\u00f6n"</code> &times;68</p>
+          <p>after: min – &middot; max – &middot; mean – &middot; median –</p>
+          <p>top after: <code>"Lieferung versp\u00e4tet, sonst gut"</code> &times;86, <code>"Sehr zufrieden mit dem Service"</code> &times;82, <code>"Gerne wieder"</code> &times;72, <code>"Preis und Leistung stimmen"</code> &times;67, <code>"Mehr Auswahl w\u00e4re sch\u00f6n"</code> &times;66</p>
+        </details>
+      </td>
+    </tr>
+    <tr>
+      <td><code>interviewer_note</code></td><td>string</td>
+      <td class="num">253</td>
+      <td class="num">737</td>
+      <td class="num">6</td>
+      <td class="num">0</td>
+      <td class="num">0</td>
+      <td class="num">3</td>
+      <td>
+        <details><summary>details</summary>
+          <p>before: whitespace 89 &middot; non-NFC 0 &middot; control 3 &middot; null-like 0 &middot; length 18 to 43</p>
+          <p>top before: <code>"Teilnahme per Tablet"</code> &times;86, <code>"Telefon besetzt,  zweiter Versuch"</code> &times;86, <code>"R\u00fcckruf vereinbart"</code> &times;78, <code>"Interview unterbrochen\r\nam Folgetag beendet"</code> &times;1, <code>"R\u00fcckruf vereinbart\r\nabends erreichbar"</code> &times;1</p>
+          <p>after: min – &middot; max – &middot; mean – &middot; median –</p>
+          <p>top after: <code>"Telefon besetzt,  zweiter Versuch"</code> &times;84, <code>"Teilnahme per Tablet"</code> &times;83, <code>"R\u00fcckruf vereinbart"</code> &times;75, <code>"Interview unterbrochen\nam Folgetag beendet"</code> &times;1, <code>"R\u00fcckruf vereinbart\nabends erreichbar"</code> &times;1</p>
+        </details>
+      </td>
+    </tr>
+  </tbody>
+</table></div>
+
+<h2 id="rules">Rules</h2>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">Rule</th><th scope="col" class="num">Checked</th><th scope="col" class="num">Failed</th><th scope="col">Examples</th></tr></thead>
+  <tbody>
+    <tr><td><code>respondent_id.required</code></td><td class="num">1,018</td><td class="num">1</td><td class="cell">r952 &#34;&#34;</td></tr>
+    <tr><td><code>respondent_id.regex</code></td><td class="num">1,017</td><td class="num">2</td><td class="cell">r174 &#34;NG-6346397&#34;
+r855 &#34;NG-17261&#34;</td></tr>
+    <tr><td><code>wave.type</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>wave.required</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>wave.allowed</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>start_date.type</code></td><td class="num">1,018</td><td class="num">10</td><td class="cell">r66 &#34;32.01.2025&#34;
+r233 &#34;31.02.2025&#34;
+r480 &#34;2025-00-10&#34;
+r578 &#34;2025-13-01&#34;
+r711 &#34;15/13/2025&#34;</td></tr>
+    <tr><td><code>start_date.required</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>completed_at.type</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>completed_at.required</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>age.type</code></td><td class="num">1,015</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>age.min</code></td><td class="num">1,015</td><td class="num">2</td><td class="cell">r48 &#34;15&#34;
+r76 &#34;12&#34;</td></tr>
+    <tr><td><code>age.max</code></td><td class="num">1,015</td><td class="num">3</td><td class="cell">r118 &#34;130&#34;
+r544 &#34;150&#34;
+r871 &#34;101&#34;</td></tr>
+    <tr><td><code>gender.allowed</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>country.allowed</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>household_income.type</code></td><td class="num">998</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>household_income.min</code></td><td class="num">998</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>spend_last_month_eur.type</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>spend_last_month_eur.min</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>satisfaction.type</code></td><td class="num">1,003</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>satisfaction.min</code></td><td class="num">1,003</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>satisfaction.max</code></td><td class="num">1,003</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>nps.type</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>nps.min</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>nps.max</code></td><td class="num">1,018</td><td class="num">0</td><td class="cell"></td></tr>
+    <tr><td><code>dedupe.exact</code></td><td class="num">1,000</td><td class="num">12</td><td class="cell">r85 duplicate of r80
+r304 duplicate of r124
+r324 duplicate of r181
+r389 duplicate of r41
+r407 duplicate of r189</td></tr>
+    <tr><td><code>dedupe.key.1</code></td><td class="num">988</td><td class="num">6</td><td class="cell">r40 superseded by r902
+r190 superseded by r288
+r220 superseded by r687
+r422 superseded by r610
+r528 superseded by r783</td></tr>
+  </tbody>
+</table></div>
+
+<h2 id="duplicates">Duplicates</h2>
+<ul class="plain">
+  <li>exact: 12 removed of 1,000 rows</li>
+  <li><code>dedupe.key.1</code> [respondent_id] keep last by completed_at: 6 removed</li>
+</ul>
+
+<h2 id="rejects">Rejects</h2>
+<p>36 rows in <code>rejects.csv</code>: read 0 · validate 18 · dedupe 18 · missing 0.</p>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col">First failing rule</th><th scope="col" class="num">Rows</th></tr></thead>
+  <tbody>
+    <tr><td><code>age.max</code></td><td class="num">3</td></tr>
+    <tr><td><code>age.min</code></td><td class="num">2</td></tr>
+    <tr><td><code>dedupe.exact</code></td><td class="num">12</td></tr>
+    <tr><td><code>dedupe.key.1</code></td><td class="num">6</td></tr>
+    <tr><td><code>respondent_id.regex</code></td><td class="num">2</td></tr>
+    <tr><td><code>respondent_id.required</code></td><td class="num">1</td></tr>
+    <tr><td><code>start_date.type</code></td><td class="num">10</td></tr>
+  </tbody>
+</table></div>
+<p>By column: <code>age</code> 5, <code>respondent_id</code> 3, <code>start_date</code> 10</p>
+<h3>First 20 rejected rows</h3>
+<div class="table-wrap"><table>
+  <thead><tr><th scope="col" class="num">Row</th><th scope="col">Stage</th><th scope="col">Rule</th><th scope="col">Detail</th><th scope="col">respondent_id</th><th scope="col">wave</th><th scope="col">start_date</th><th scope="col">completed_at</th><th scope="col">age</th><th scope="col">gender</th><th scope="col">country</th><th scope="col">household_income</th><th scope="col">spend_last_month_eur</th><th scope="col">satisfaction</th><th scope="col">nps</th><th scope="col">comment</th><th scope="col">interviewer_note</th></tr></thead>
+  <tbody>
+    <tr><td class="num">40</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r902</td><td class="cell">NG-129914</td><td class="cell">3</td><td class="cell">07.02.2026</td><td class="cell">07.02.2026 17:26</td><td class="cell">85</td><td class="cell">w</td><td class="cell">AT</td><td class="cell">79.500,00</td><td class="cell">1.825,82 €</td><td class="cell">2</td><td class="cell">5</td><td class="cell"></td><td class="cell"></td></tr>
+    <tr><td class="num">48</td><td>validate</td><td><code>age.min</code></td><td class="cell">age.min: 15 &lt; 16</td><td class="cell">NG-160720</td><td class="cell">1</td><td class="cell">11.04.2026</td><td class="cell">13.04.2026 10:55</td><td class="cell">15</td><td class="cell">m</td><td class="cell">AT</td><td class="cell">71.000</td><td class="cell">2.322,10 €</td><td class="cell">8</td><td class="cell">10</td><td class="cell">Keine Anmerkungen</td><td class="cell"></td></tr>
+    <tr><td class="num">66</td><td>validate</td><td><code>start_date.type</code></td><td class="cell">start_date.type: &#34;32.01.2025&#34; not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)</td><td class="cell">NG-426903</td><td class="cell">1</td><td class="cell">32.01.2025</td><td class="cell">21.08.2025 09:02</td><td class="cell">48</td><td class="cell">keine Angabe</td><td class="cell">de</td><td class="cell">41.500</td><td class="cell">562,09 €</td><td class="cell">1</td><td class="cell">7</td><td class="cell">Sehr zufrieden mit dem Service</td><td class="cell">Teilnahme per Tablet</td></tr>
+    <tr><td class="num">76</td><td>validate</td><td><code>age.min</code></td><td class="cell">age.min: 12 &lt; 16</td><td class="cell">NG-679587</td><td class="cell">3</td><td class="cell">22.12.2025</td><td class="cell">22.12.2025 17:36</td><td class="cell">12</td><td class="cell">männlich</td><td class="cell">Österreich</td><td class="cell">81.500</td><td class="cell">2.489,90 €</td><td class="cell">8</td><td class="cell">0</td><td class="cell">Alles prima</td><td class="cell"></td></tr>
+    <tr><td class="num">85</td><td>dedupe</td><td><code>dedupe.exact</code></td><td class="cell">duplicate of r80</td><td class="cell">NG-928448</td><td class="cell">3</td><td class="cell">12.11.2025</td><td class="cell">12.11.2025 07:07</td><td class="cell">63</td><td class="cell">weiblich</td><td class="cell">Schweiz</td><td class="cell">49.500,00</td><td class="cell">1.187,14 €</td><td class="cell">10</td><td class="cell">1</td><td class="cell">Lieferung verspätet,  sonst gut</td><td class="cell">Rückruf vereinbart</td></tr>
+    <tr><td class="num">118</td><td>validate</td><td><code>age.max</code></td><td class="cell">age.max: 130 &gt; 99</td><td class="cell">NG-774006</td><td class="cell">4</td><td class="cell">12/02/2026</td><td class="cell">13.02.2026 14:37</td><td class="cell">130</td><td class="cell">divers</td><td class="cell">de</td><td class="cell">48.000</td><td class="cell">1.413,39 €</td><td class="cell">1</td><td class="cell">7</td><td class="cell"></td><td class="cell"></td></tr>
+    <tr><td class="num">174</td><td>validate</td><td><code>respondent_id.regex</code></td><td class="cell">respondent_id.regex: &#34;NG-6346397&#34; does not match ^NG-\d{6}$</td><td class="cell">NG-6346397</td><td class="cell">1</td><td class="cell">07/11/2025</td><td class="cell">07.11.2025 10:34</td><td class="cell">63</td><td class="cell">weiblich</td><td class="cell">AT</td><td class="cell">89.500</td><td class="cell">557,51 €</td><td class="cell">3</td><td class="cell">4</td><td class="cell">Mehr Auswahl wäre schön</td><td class="cell"></td></tr>
+    <tr><td class="num">190</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r288</td><td class="cell">NG-283425</td><td class="cell">4</td><td class="cell">11.02.2026</td><td class="cell">11.02.2026 21:14</td><td class="cell">56</td><td class="cell">divers</td><td class="cell">Deutschland</td><td class="cell">108.500,00</td><td class="cell">736,04 €</td><td class="cell">10</td><td class="cell">1</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell">Telefon besetzt,  zweiter Versuch</td></tr>
+    <tr><td class="num">220</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r687</td><td class="cell">NG-798099</td><td class="cell">3</td><td class="cell">20.06.2025</td><td class="cell">20.06.2025 14:19</td><td class="cell">73</td><td class="cell">keine Angabe</td><td class="cell">AT</td><td class="cell">43.500</td><td class="cell">1.742,42 €</td><td class="cell">1</td><td class="cell">8</td><td class="cell"></td><td class="cell"></td></tr>
+    <tr><td class="num">233</td><td>validate</td><td><code>start_date.type</code></td><td class="cell">start_date.type: &#34;31.02.2025&#34; not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)</td><td class="cell">NG-679621</td><td class="cell">2</td><td class="cell">31.02.2025</td><td class="cell">11.11.2025 20:46</td><td class="cell">37</td><td class="cell">männlich</td><td class="cell">Österreich</td><td class="cell">60.000</td><td class="cell">2.042,77 €</td><td class="cell">7</td><td class="cell">9</td><td class="cell">Fragebogen war zu lang</td><td class="cell"></td></tr>
+    <tr><td class="num">304</td><td>dedupe</td><td><code>dedupe.exact</code></td><td class="cell">duplicate of r124</td><td class="cell">NG-272155</td><td class="cell">4</td><td class="cell">17.02.2026</td><td class="cell">19.02.2026 17:41</td><td class="cell">85</td><td class="cell">w</td><td class="cell">Österreich</td><td class="cell">47.000,00</td><td class="cell">1.603,66 €</td><td class="cell">2</td><td class="cell">7</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell"></td></tr>
+    <tr><td class="num">324</td><td>dedupe</td><td><code>dedupe.exact</code></td><td class="cell">duplicate of r181</td><td class="cell">NG-761426</td><td class="cell">2</td><td class="cell">16.04.2025</td><td class="cell">16.04.2025 15:13</td><td class="cell">30</td><td class="cell">weiblich</td><td class="cell">DE</td><td class="cell">51.500</td><td class="cell">83,23 €</td><td class="cell">4</td><td class="cell">8</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell"></td></tr>
+    <tr><td class="num">389</td><td>dedupe</td><td><code>dedupe.exact</code></td><td class="cell">duplicate of r41</td><td class="cell">NG-547873</td><td class="cell">3</td><td class="cell">10.01.2026</td><td class="cell">11.01.2026 12:08</td><td class="cell">84</td><td class="cell">keine Angabe</td><td class="cell">DE</td><td class="cell">54.000</td><td class="cell">781,01 €</td><td class="cell">10</td><td class="cell">0</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell"></td></tr>
+    <tr><td class="num">407</td><td>dedupe</td><td><code>dedupe.exact</code></td><td class="cell">duplicate of r189</td><td class="cell">NG-801086</td><td class="cell">2</td><td class="cell">10.12.2025</td><td class="cell">10.12.2025 15:04</td><td class="cell">67</td><td class="cell">W</td><td class="cell">Deutschland</td><td class="cell">106.000</td><td class="cell">1.561,15 €</td><td class="cell">1</td><td class="cell">3</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell"></td></tr>
+    <tr><td class="num">422</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r610</td><td class="cell">NG-959125</td><td class="cell">1</td><td class="cell">02.01.2026</td><td class="cell">03.01.2026 12:42</td><td class="cell">25</td><td class="cell">m</td><td class="cell">de</td><td class="cell">106.500</td><td class="cell">311,88 €</td><td class="cell">5</td><td class="cell">4</td><td class="cell">Gerne wieder</td><td class="cell">Rückruf vereinbart</td></tr>
+    <tr><td class="num">480</td><td>validate</td><td><code>start_date.type</code></td><td class="cell">start_date.type: &#34;2025-00-10&#34; not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)</td><td class="cell">NG-520961</td><td class="cell">4</td><td class="cell">2025-00-10</td><td class="cell">11.01.2025 08:18</td><td class="cell">74</td><td class="cell">w</td><td class="cell">DE</td><td class="cell">80.000</td><td class="cell">2.466,43 €</td><td class="cell">2</td><td class="cell">9</td><td class="cell">Keine Anmerkungen</td><td class="cell"></td></tr>
+    <tr><td class="num">528</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r783</td><td class="cell">NG-960378</td><td class="cell">4</td><td class="cell">06/07/2025</td><td class="cell">06.07.2025 21:23</td><td class="cell">45</td><td class="cell">weiblich</td><td class="cell">AT</td><td class="cell">79.000,00</td><td class="cell">1.523,82 €</td><td class="cell">10</td><td class="cell">7</td><td class="cell"></td><td class="cell"></td></tr>
+    <tr><td class="num">544</td><td>validate</td><td><code>age.max</code></td><td class="cell">age.max: 150 &gt; 99</td><td class="cell">NG-762228</td><td class="cell">2</td><td class="cell">07.09.2025</td><td class="cell">08.09.2025 11:21</td><td class="cell">150</td><td class="cell">keine Angabe</td><td class="cell">de</td><td class="cell">53.000,00</td><td class="cell">1.930,34 €</td><td class="cell">5</td><td class="cell">6</td><td class="cell">Gerne wieder</td><td class="cell"></td></tr>
+    <tr><td class="num">578</td><td>validate</td><td><code>start_date.type</code></td><td class="cell">start_date.type: &#34;2025-13-01&#34; not a date (%d.%m.%Y, %Y-%m-%d, %d/%m/%Y)</td><td class="cell">NG-920527</td><td class="cell">1</td><td class="cell">2025-13-01</td><td class="cell">11.07.2025 20:26</td><td class="cell">34</td><td class="cell">männlich</td><td class="cell">Schweiz</td><td class="cell">75.000,00</td><td class="cell">1.778,66 €</td><td class="cell">7</td><td class="cell">7</td><td class="cell">Alles prima</td><td class="cell"></td></tr>
+    <tr><td class="num">583</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r673</td><td class="cell">NG-649809</td><td class="cell">2</td><td class="cell">26.04.2025</td><td class="cell">26.04.2025 09:34</td><td class="cell">41</td><td class="cell">W</td><td class="cell">Deutschland</td><td class="cell">98.000,00</td><td class="cell">1.958,11 €</td><td class="cell">5</td><td class="cell">8</td><td class="cell">Lieferung verspätet, sonst gut</td><td class="cell">Telefon besetzt,  zweiter Versuch</td></tr>
+  </tbody>
+</table></div>
+
+
+<h2 id="run">Run info</h2>
+<div class="table-wrap"><table>
+  <tbody>
+    <tr><th scope="row">Started</th><td>2026-10-29T00:00:00Z</td></tr>
+    <tr><th scope="row">Status</th><td>ok &middot; exit 0</td></tr>
+    <tr><th scope="row">Profile SHA-256</th><td class="cell">d8c56a41c66f1dfe1973ef0afb2c94f94c11039c13963f3e7a5aa2f62a131ad8</td></tr>
+    <tr><th scope="row">Input SHA-256</th><td class="cell">6ca4696f292c4a49139e0ab854d634fdfdaa2d863b74b2e4a6741efac23a0b79</td></tr>
+    <tr><th scope="row">Versions</th><td>clean-data 0.1.0, Python 3.13, pandas 3.1.0, pydantic 2.14.1, click 8.5.0, openpyxl 3.1.5, charset-normalizer 3.5.2, PyYAML 6.0.3, Jinja2 3.1.6, rapidfuzz 3.14.6, pyarrow 26.0.0</td></tr>
+  </tbody>
+</table></div>
+
+<footer>
+<p>Rebuilt from memory as a demo. The original client&#39;s name and data are not used.</p>
+<p>Report schema version 1. The JSON report holds every figure on this page.</p>
+</footer>
+</main>
+</body>
+</html>
