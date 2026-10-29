@@ -15,7 +15,9 @@ import csv
 import datetime as dt
 import importlib
 import importlib.util
+import io
 import os
+import stat
 import tempfile
 from collections.abc import Mapping, Sequence
 from pathlib import Path
@@ -44,6 +46,24 @@ def parquet_available() -> bool:
     return importlib.util.find_spec("pyarrow") is not None
 
 
+def _cannot_write(target: Path, exc: OSError) -> OutputError:
+    return OutputError(f"cannot write {target}: {exc.strerror or exc}")
+
+
+def _final_mode(target: Path) -> int:
+    """The mode of the file being replaced, else what a plain ``open`` gives: ``0o666`` minus the umask.
+
+    ``mkstemp`` creates files readable by the owner only; on Windows ``os.chmod`` just sets or clears
+    the read-only flag, which is all the mode means there.
+    """
+    try:
+        return stat.S_IMODE(target.stat().st_mode)
+    except FileNotFoundError:
+        mask = os.umask(0)
+        os.umask(mask)
+        return 0o666 & ~mask
+
+
 class AtomicFile:
     """A temporary file next to ``target``; ``commit`` moves it into place, ``abort`` removes it."""
 
@@ -53,19 +73,24 @@ class AtomicFile:
             target.parent.mkdir(parents=True, exist_ok=True)
             handle, name = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
         except OSError as exc:
-            raise OutputError(f"cannot write {target}: {exc.strerror or exc}") from exc
+            raise _cannot_write(target, exc) from exc
         os.close(handle)
         self.temp = Path(name)
 
     def commit(self) -> None:
         try:
+            os.chmod(self.temp, _final_mode(self.target))
             os.replace(self.temp, self.target)
         except OSError as exc:
             self.abort()
-            raise OutputError(f"cannot write {self.target}: {exc.strerror or exc}") from exc
+            raise _cannot_write(self.target, exc) from exc
 
     def abort(self) -> None:
-        self.temp.unlink(missing_ok=True)
+        """Remove the temporary file; one that cannot be removed must not hide the error being raised."""
+        try:
+            self.temp.unlink(missing_ok=True)
+        except OSError:
+            pass
 
 
 def write_text(target: Path, text: str) -> None:
@@ -74,6 +99,9 @@ def write_text(target: Path, text: str) -> None:
     try:
         with file.temp.open("w", encoding="utf-8", newline="\n") as handle:
             handle.write(text)
+    except OSError as exc:
+        file.abort()
+        raise _cannot_write(target, exc) from exc
     except BaseException:
         file.abort()
         raise
@@ -103,8 +131,15 @@ class CsvSink:
     ) -> None:
         self.file = AtomicFile(target)
         self.columns = list(columns)
-        self.encoding = _csv_encoding(encoding, bom)
-        self.handle: IO[str] = self.file.temp.open("w", encoding=self.encoding, newline="")
+        try:
+            self.encoding = _csv_encoding(encoding, bom)
+            self.handle: IO[str] = self.file.temp.open("w", encoding=self.encoding, newline="")
+        except OSError as exc:
+            self.file.abort()
+            raise _cannot_write(target, exc) from exc
+        except BaseException:
+            self.file.abort()
+            raise
         self.writer = csv.writer(self.handle, delimiter=delimiter, quotechar='"', lineterminator="\n")
         self._row(self.columns)
 
@@ -116,6 +151,9 @@ class CsvSink:
             raise OutputError(
                 f"{self.file.target.name}: a value cannot be written as {self.encoding}"
             ) from exc
+        except OSError as exc:
+            self.abort()
+            raise _cannot_write(self.file.target, exc) from exc
 
     def write(self, frame: pd.DataFrame) -> None:
         for row in rows_of(frame, self.columns):
@@ -126,11 +164,19 @@ class CsvSink:
             self._row(row)
 
     def commit(self) -> None:
-        self.handle.close()
+        try:
+            self.handle.flush()
+            self.handle.close()
+        except OSError as exc:
+            self.abort()
+            raise _cannot_write(self.file.target, exc) from exc
         self.file.commit()
 
     def abort(self) -> None:
-        self.handle.close()
+        try:
+            self.handle.close()
+        except OSError:
+            pass
         self.file.abort()
 
 
@@ -167,23 +213,28 @@ def save_workbook(
         ) from exc
     for cell in sheet[1]:
         cell.font = Font(bold=True)
-    for line in sheet.iter_rows(min_row=2):
+    for line in sheet.iter_rows():
         for cell in line:
             value = cell.value
             if isinstance(value, dt.datetime):
                 cell.number_format = "yyyy-mm-dd hh:mm:ss"
             elif isinstance(value, dt.date):
                 cell.number_format = "yyyy-mm-dd"
-            elif isinstance(value, str) and value.startswith("="):
-                cell.data_type = "s"
+            elif isinstance(value, str) and cell.data_type in ("f", "e"):
+                cell.data_type = "s"  # text that looks like a formula or an error code stays text
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = min(MAX_WIDTH, width + 2)
     sheet.freeze_panes = "A2"
     last = get_column_letter(max(1, len(columns)))
     sheet.auto_filter.ref = f"A1:{last}{len(rows) + 1}"
+    buffer = io.BytesIO()  # openpyxl leaves its zip open when saving to a path fails, which blocks cleanup
+    book.save(buffer)
     file = AtomicFile(target)
     try:
-        book.save(file.temp)
+        file.temp.write_bytes(buffer.getvalue())
+    except OSError as exc:
+        file.abort()
+        raise _cannot_write(target, exc) from exc
     except BaseException:
         file.abort()
         raise
@@ -235,7 +286,14 @@ class ParquetSink:
             fields.append(self.pa.field(name, arrow_type))
         self.schema = self.pa.schema(fields)
         self.file = AtomicFile(target)
-        self.writer = parquet.ParquetWriter(str(self.file.temp), self.schema, compression="snappy")
+        try:
+            self.writer = parquet.ParquetWriter(str(self.file.temp), self.schema, compression="snappy")
+        except OSError as exc:
+            self.file.abort()
+            raise _cannot_write(target, exc) from exc
+        except BaseException:
+            self.file.abort()
+            raise
 
     def write(self, frame: pd.DataFrame) -> None:
         values = list(zip(*rows_of(frame, self.columns), strict=True)) if self.columns else []

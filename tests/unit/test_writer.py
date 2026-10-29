@@ -1,21 +1,29 @@
 from __future__ import annotations
 
 import datetime as dt
+import errno
+import os
+import stat
+import sys
+from collections.abc import Sequence
 from pathlib import Path
+from typing import Any
 
 import pytest
 
 from cleandata.core.ledger import Reject
 from cleandata.core.writer import (
+    EXCEL_ROW_LIMIT,
     AtomicFile,
     CsvSink,
     ParquetSink,
     RejectsSink,
     check_output_path,
+    parquet_available,
     reject_columns,
     save_workbook,
 )
-from cleandata.errors import OutputError, UsageError
+from cleandata.errors import MissingExtraError, OutputError, UsageError
 from support import frame_of
 
 COLUMNS = ["id", "when", "at", "n", "x", "ok", "note"]
@@ -144,3 +152,177 @@ def test_rejects_columns_and_rows(tmp_path: Path) -> None:
         "3,read,read.malformed,a;b;c;d,,\n"
         "7,validate,age.max,age.max: 130 > 99,NG-1,130\n"
     )
+
+
+def test_xlsx_headers_and_error_like_text_stay_text(tmp_path: Path) -> None:
+    import openpyxl
+
+    target = tmp_path / "out.xlsx"
+    save_workbook(target, "cleaned", ["=A1+1", "b"], [["#N/A", "#REF!"], ["=1+1", "ok"]])
+    sheet = openpyxl.load_workbook(target)["cleaned"]
+    cells = [(cell.value, cell.data_type) for line in sheet.iter_rows() for cell in line]
+    assert cells == [
+        ("=A1+1", "s"),
+        ("b", "s"),
+        ("#N/A", "s"),
+        ("#REF!", "s"),
+        ("=1+1", "s"),
+        ("ok", "s"),
+    ]
+
+
+class HugeRows(Sequence[Sequence[object]]):
+    """A row list of exactly the Excel limit that fails if anything reads a row."""
+
+    def __len__(self) -> int:
+        return EXCEL_ROW_LIMIT
+
+    def __getitem__(self, index: Any) -> Any:
+        raise AssertionError("the row limit is checked before any row is read")
+
+
+def test_more_rows_than_excel_holds_is_an_output_error(tmp_path: Path) -> None:
+    with pytest.raises(OutputError, match=f"exceed the Excel limit of {EXCEL_ROW_LIMIT - 1} data rows"):
+        save_workbook(tmp_path / "out.xlsx", "cleaned", ["a"], HugeRows())
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_xlsx_write_failure_is_an_output_error_and_leaves_no_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def full_disk(self: Path, data: bytes) -> int:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(Path, "write_bytes", full_disk)
+        with pytest.raises(OutputError, match="No space left on device"):
+            save_workbook(tmp_path / "out.xlsx", "cleaned", ["a"], [["x"]])
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_abort_ignores_a_temp_file_that_cannot_be_removed(tmp_path: Path) -> None:
+    class Stuck:
+        def unlink(self, missing_ok: bool = False) -> None:
+            raise PermissionError(errno.EACCES, "Permission denied")
+
+    file = AtomicFile(tmp_path / "out.csv")
+    real = file.temp
+    file.temp = Stuck()  # stands in for a Path whose unlink fails
+    file.abort()
+    real.unlink()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_parquet_output_without_pyarrow_is_a_missing_extra_error(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(sys.modules, "pyarrow", None)
+    assert not parquet_available()
+    with pytest.raises(MissingExtraError, match='optional extra "parquet"'):
+        ParquetSink(tmp_path / "out.parquet", ["a"], {})
+    assert list(tmp_path.iterdir()) == []
+
+
+@pytest.mark.needs_parquet
+def test_a_parquet_writer_that_cannot_open_leaves_no_temp_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import pyarrow.parquet as pq
+
+    def broken(*args: object, **kwargs: object) -> None:
+        raise OSError(errno.EACCES, "Permission denied")
+
+    monkeypatch.setattr(pq, "ParquetWriter", broken)
+    with pytest.raises(OutputError, match="Permission denied"):
+        ParquetSink(tmp_path / "out.parquet", ["a"], {})
+    assert list(tmp_path.iterdir()) == []
+
+
+class FullDiskWriter:
+    def writerow(self, row: object) -> None:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+
+class FullDiskHandle:
+    def __init__(self, real: Any) -> None:
+        self.real = real
+
+    def flush(self) -> None:
+        raise OSError(errno.ENOSPC, "No space left on device")
+
+    def close(self) -> None:
+        self.real.close()
+
+
+def test_a_failing_csv_write_is_an_output_error_and_keeps_the_old_file(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "out.csv"
+    target.write_text("old", encoding="utf-8")
+    sink = CsvSink(target, ["a"])
+    monkeypatch.setattr(sink, "writer", FullDiskWriter())
+    with pytest.raises(OutputError, match="No space left on device"):
+        sink.write_rows([["x"]])
+    assert target.read_text(encoding="utf-8") == "old"
+    assert [p.name for p in tmp_path.iterdir()] == ["out.csv"]
+
+
+def test_a_failing_csv_flush_on_commit_is_an_output_error_and_leaves_no_file(tmp_path: Path) -> None:
+    sink = CsvSink(tmp_path / "out.csv", ["a"])
+    sink.handle = FullDiskHandle(sink.handle)
+    with pytest.raises(OutputError, match="No space left on device"):
+        sink.commit()
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_csv_sink_that_cannot_start_leaves_no_temp_file(tmp_path: Path) -> None:
+    with pytest.raises(LookupError):
+        CsvSink(tmp_path / "out.csv", ["a"], encoding="no-such-codec")
+    assert list(tmp_path.iterdir()) == []
+
+
+def spy_on_chmod(monkeypatch: pytest.MonkeyPatch) -> list[int]:
+    modes: list[int] = []
+    real = os.chmod
+
+    def spy(path: Any, mode: int, **kwargs: Any) -> None:
+        modes.append(mode)
+        real(path, mode, **kwargs)
+
+    monkeypatch.setattr(os, "chmod", spy)
+    return modes
+
+
+def test_a_new_file_gets_the_mode_a_plain_open_would_give(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    modes = spy_on_chmod(monkeypatch)
+    target = tmp_path / "out.csv"
+    previous = os.umask(0o027)
+    try:
+        kept = os.umask(0o027)  # Windows keeps only the owner bits of the mask
+        sink = CsvSink(target, ["a"])
+        sink.commit()
+    finally:
+        os.umask(previous)
+    assert modes == [0o666 & ~kept]
+    if os.name == "posix":
+        assert stat.S_IMODE(target.stat().st_mode) == 0o640
+    assert os.access(target, os.R_OK)
+    assert target.stat().st_mode & stat.S_IWRITE
+
+
+def test_a_replaced_file_keeps_the_mode_of_the_old_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    target = tmp_path / "out.csv"
+    target.write_text("old", encoding="utf-8")
+    target.chmod(0o640)  # on Windows this only keeps the file writable
+    expected = stat.S_IMODE(target.stat().st_mode)
+    modes = spy_on_chmod(monkeypatch)
+    sink = CsvSink(target, ["a"])
+    sink.commit()
+    assert modes == [expected]
+    assert stat.S_IMODE(target.stat().st_mode) == expected
+    assert os.access(target, os.R_OK)
+    assert target.stat().st_mode & stat.S_IWRITE
