@@ -1,0 +1,7 @@
+* text=auto eol=lf
+*.png binary
+*.woff2 binary
+*.xlsx binary
+fixtures/** -text
+tests/golden/** -text
+web/demo/** -text
