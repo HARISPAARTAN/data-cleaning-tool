@@ -67,10 +67,13 @@ def dry_run(tmp_path: Path, before: Sequence[str] = (), after: Sequence[str] = (
 
 def test_python_dash_m_runs_the_same_command_line(tmp_path: Path) -> None:
     def run(*args: str, **env: str) -> subprocess.CompletedProcess[str]:
+        # decode the child's output with the encoding the child was told to write (PYTHONIOENCODING), not
+        # with this process's locale: on Linux that is UTF-8, and a latin-1 middle dot would raise here
         return subprocess.run(
             [sys.executable, "-m", "cleandata", *args],
             capture_output=True,
             text=True,
+            encoding=env.get("PYTHONIOENCODING"),
             timeout=120,
             check=False,
             env={**os.environ, **env},
