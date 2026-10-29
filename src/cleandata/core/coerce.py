@@ -1,8 +1,10 @@
 """Stage 4, types: numbers and integers with locale settings, booleans, dates and datetimes.
 
 Parsing is strict. A number may carry a sign, a decimal separator and, when ``thousands`` is set,
-correctly grouped thousands (``1.234.567``); an exponent is accepted only without grouping. Under
-German settings ``1.5`` is invalid, never 15. Dates try the patterns in profile order with a full match
+correctly grouped thousands (``1.234.567``); an exponent is accepted only without grouping. A space or
+no-break space counts as a group separator only inside such a group, so ``10 20`` is two numbers, not
+1020, and a leading zero never starts a group (``0.500`` is ambiguous). Under German settings ``1.5`` is
+invalid, never 15. Dates try the patterns in profile order with a full match
 and count the first pattern that matched. Native Excel values pass where they fit.
 """
 
@@ -37,6 +39,9 @@ COLUMN_TYPES: Final = ("string", "integer", "number", "boolean", "date", "dateti
 INT64_MIN: Final = -(2**63)
 INT64_MAX: Final = 2**63 - 1
 MIDNIGHT: Final = dt.time(0, 0)
+GROUP_SPACES: Final = " \N{NO-BREAK SPACE}"
+NOT_A_NUMBER: Final = "not a number"
+AMBIGUOUS_SEPARATOR: Final = "ambiguous separator"
 
 
 @dataclass(frozen=True)
@@ -96,49 +101,60 @@ def json_value(value: object) -> object:
 
 
 @lru_cache(maxsize=64)
-def _number_patterns(decimal: str, thousands: str | None) -> tuple[re.Pattern[str], re.Pattern[str] | None]:
+def _number_patterns(
+    decimal: str, thousands: str | None
+) -> tuple[re.Pattern[str], re.Pattern[str] | None, re.Pattern[str] | None]:
+    """The plain pattern, the grouped one and the one for a zero-led group (both None without grouping)."""
     d = re.escape(decimal)
     plain = re.compile(
         rf"(?P<sign>[+-]?)(?:(?P<int>[0-9]+)(?:{d}(?P<frac>[0-9]+))?|{d}(?P<frac2>[0-9]+))"
         r"(?P<exp>[eE][+-]?[0-9]+)?"
     )
     if thousands is None:
-        return plain, None
+        return plain, None, None
     t = re.escape(thousands)
-    grouped = re.compile(rf"(?P<sign>[+-]?)(?P<int>[0-9]{{1,3}}(?:{t}[0-9]{{3}})+)(?:{d}(?P<frac>[0-9]+))?")
-    return plain, grouped
+    spaces = re.escape(GROUP_SPACES)
+    grouped = re.compile(
+        rf"(?P<sign>[+-]?)(?P<int>[1-9][0-9]{{0,2}}(?:(?:{t}|[{spaces}])[0-9]{{3}})+)(?:{d}(?P<frac>[0-9]+))?"
+    )
+    zero_led = re.compile(rf"[+-]?0[0-9]{{0,2}}(?:{t}[0-9]{{3}})+(?:{d}[0-9]+)?")
+    return plain, grouped, zero_led
 
 
-def parse_decimal(text: str, settings: ParseSettings, strip: tuple[str, ...] = ()) -> Decimal | None:
-    """Parse a number written with the column's separators; None when it is not one."""
-    for part in strip:
-        text = text.replace(part, "")
-    text = "".join(text.split())
+def _read_number(text: str, settings: ParseSettings, strip: tuple[str, ...]) -> Decimal | str:
+    """The value of a number written with the column's separators, or the reason it is not one."""
+    text = _strip(text, strip).strip()
     if not text:
-        return None
-    plain, grouped = _number_patterns(settings.decimal, settings.thousands)
+        return NOT_A_NUMBER
+    plain, grouped, zero_led = _number_patterns(settings.decimal, settings.thousands)
     match = plain.fullmatch(text)
     if match is not None:
         integer = match.group("int") or "0"
         fraction = match.group("frac") or match.group("frac2") or ""
         exponent = match.group("exp") or ""
-    elif grouped is not None and settings.thousands is not None:
-        match = grouped.fullmatch(text)
+    else:
+        match = None if grouped is None else grouped.fullmatch(text)
         if match is None:
-            return None
-        integer = match.group("int").replace(settings.thousands, "")
+            if zero_led is not None and zero_led.fullmatch(text) is not None:
+                return AMBIGUOUS_SEPARATOR
+            return NOT_A_NUMBER
+        integer = re.sub("[^0-9]", "", match.group("int"))
         fraction = match.group("frac") or ""
         exponent = ""
-    else:
-        return None
     literal = f"{match.group('sign')}{integer}{'.' + fraction if fraction else ''}{exponent}"
     try:
         value = Decimal(literal)
     except InvalidOperation:
-        return None
+        return NOT_A_NUMBER
     if not value.is_finite() or value.adjusted() > 308:
-        return None
+        return NOT_A_NUMBER
     return value
+
+
+def parse_decimal(text: str, settings: ParseSettings, strip: tuple[str, ...] = ()) -> Decimal | None:
+    """Parse a number written with the column's separators; None when it is not one."""
+    result = _read_number(text, settings, strip)
+    return None if isinstance(result, str) else result
 
 
 def _strip(text: str, strip: tuple[str, ...]) -> str:
@@ -157,9 +173,9 @@ def to_number(value: object, settings: ParseSettings, strip: tuple[str, ...] = (
     if isinstance(value, float):
         return value if math.isfinite(value) else Invalid(value, "not a finite number")
     if isinstance(value, str):
-        parsed = parse_decimal(value, settings, strip)
-        if parsed is None:
-            return Invalid(value, "not a number")
+        parsed = _read_number(value, settings, strip)
+        if isinstance(parsed, str):
+            return Invalid(value, parsed)
         return float(parsed)
     return Invalid(value, f"a {type(value).__name__} is not a number")
 
@@ -174,9 +190,9 @@ def to_integer(value: object, settings: ParseSettings, strip: tuple[str, ...] = 
             return Invalid(value, "not a whole number")
         number = int(value)
     elif isinstance(value, str):
-        parsed = parse_decimal(value, settings, strip)
-        if parsed is None:
-            return Invalid(value, "not a number")
+        parsed = _read_number(value, settings, strip)
+        if isinstance(parsed, str):
+            return Invalid(value, parsed)
         if parsed != parsed.to_integral_value():
             return Invalid(value, "not a whole number")
         number = int(parsed)

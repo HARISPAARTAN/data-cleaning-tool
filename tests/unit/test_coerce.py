@@ -35,7 +35,14 @@ PLAIN = ParseSettings()
         ("+7", 7.0),
         (",5", 0.5),
         ("1 234,5", 1234.5),
+        ("1\N{NO-BREAK SPACE}234,5", 1234.5),
+        ("1 234 567,89", 1234567.89),
+        ("-1 234,5", -1234.5),
+        ("  45.000,00\t", 45000.0),
         ("0", 0.0),
+        ("0,5", 0.5),
+        ("0,500", 0.5),
+        ("1.000", 1000.0),
     ],
 )
 def test_german_numbers(text: str, expected: float) -> None:
@@ -49,7 +56,18 @@ def test_german_rejects(text: str) -> None:
 
 @pytest.mark.parametrize(
     ("text", "expected"),
-    [("1,234.5", 1234.5), ("1234.5", 1234.5), ("1.5e3", 1500.0), ("-0.25", -0.25), ("1,234,567", 1234567.0)],
+    [
+        ("1,234.5", 1234.5),
+        ("1234.5", 1234.5),
+        ("1.5e3", 1500.0),
+        ("-0.25", -0.25),
+        ("1,234,567", 1234567.0),
+        ("1 234.5", 1234.5),
+        ("1\N{NO-BREAK SPACE}234 567.89", 1234567.89),
+        ("0", 0.0),
+        ("0.5", 0.5),
+        ("0.500", 0.5),
+    ],
 )
 def test_english_numbers(text: str, expected: float) -> None:
     assert to_number(text, ENGLISH) == expected
@@ -58,6 +76,69 @@ def test_english_numbers(text: str, expected: float) -> None:
 @pytest.mark.parametrize("text", ["1,23", "12,34", "1,234e3", "1.2.3"])
 def test_english_rejects(text: str) -> None:
     assert isinstance(to_number(text, ENGLISH), Invalid)
+
+
+@pytest.mark.parametrize("settings", [GERMAN, ENGLISH, PLAIN], ids=["german", "english", "plain"])
+@pytest.mark.parametrize(
+    "text",
+    [
+        "10 20",
+        "1 5",
+        "12 34 56",
+        "2025 03",
+        "-1 5",
+        "1 2345",
+        "1 23",
+        "1 234 56",
+        "1\N{NO-BREAK SPACE}5",
+        "1\t234",
+        "1 \N{NO-BREAK SPACE}234",
+        "- 5",
+        "1 e5",
+    ],
+)
+def test_merged_numbers_are_invalid_under_any_settings(text: str, settings: ParseSettings) -> None:
+    for convert in (to_number, to_integer):
+        result = convert(text, settings)
+        assert isinstance(result, Invalid)
+        assert result.reason == "not a number"
+
+
+def test_space_group_needs_grouping_settings() -> None:
+    assert isinstance(to_number("1 234", PLAIN), Invalid)
+    assert to_number("1 234", GERMAN) == 1234.0
+    assert to_number("1 234", ENGLISH) == 1234.0
+    assert to_integer("1 234 567", GERMAN) == 1234567
+
+
+@pytest.mark.parametrize(
+    ("text", "settings"),
+    [
+        ("0.500", GERMAN),
+        ("00.500", GERMAN),
+        ("-0.500", GERMAN),
+        ("0.500,5", GERMAN),
+        ("012.345", GERMAN),
+        ("0,500", ENGLISH),
+        ("00,500", ENGLISH),
+        ("+0,500.5", ENGLISH),
+        ("0,123,456", ENGLISH),
+    ],
+)
+def test_leading_zero_group_is_ambiguous(text: str, settings: ParseSettings) -> None:
+    for convert in (to_number, to_integer):
+        result = convert(text, settings)
+        assert isinstance(result, Invalid)
+        assert result.reason == "ambiguous separator"
+
+
+@pytest.mark.parametrize(
+    ("text", "settings"), [("0,5", ENGLISH), ("0.5", GERMAN), ("0 5", GERMAN), ("0 500", ENGLISH)]
+)
+def test_other_zero_led_forms_are_not_numbers(text: str, settings: ParseSettings) -> None:
+    result = to_number(text, settings)
+    assert isinstance(result, Invalid)
+    assert result.reason == "not a number"
 
 
 def test_without_thousands_grouping_is_invalid() -> None:
