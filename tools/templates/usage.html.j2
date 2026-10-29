@@ -62,9 +62,9 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
 <section id="install" aria-labelledby="install-title">
   <h2 id="install-title">Install and run</h2>
   <p class="prose">Install the command from the release wheel with <a href="https://docs.astral.sh/uv/">uv</a>, extras included:</p>
-  <pre class="term term--cmd"><code>uv tool install "data-cleaning-tool[fuzzy,parquet] @ {{ repo }}/releases/download/v{{ version }}/data_cleaning_tool-{{ version }}-py3-none-any.whl"</code></pre>
+  <pre class="term term--cmd" tabindex="0" role="region" aria-label="Install command"><code>uv tool install "data-cleaning-tool[fuzzy,parquet] @ {{ repo }}/releases/download/v{{ version }}/data_cleaning_tool-{{ version }}-py3-none-any.whl"</code></pre>
   <p class="prose">Or work from a clone, which also has the fixtures and profiles used below:</p>
-  <pre class="term term--cmd"><code>git clone {{ repo }}.git &amp;&amp; cd data-cleaning-tool &amp;&amp; uv sync --all-extras</code></pre>
+  <pre class="term term--cmd" tabindex="0" role="region" aria-label="Clone command"><code>git clone {{ repo }}.git &amp;&amp; cd data-cleaning-tool &amp;&amp; uv sync --all-extras</code></pre>
   <p class="prose">In a clone, put <code>uv run</code> in front of each <code>clean-data</code> command. The extras are optional: <code>fuzzy</code> (rapidfuzz) for fuzzy de-duplication, <code>parquet</code> (pyarrow) for Parquet output.</p>
 </section>
 
@@ -79,15 +79,15 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
   {% for step in steps %}
   <article class="step" id="step-{{ step.key }}" aria-labelledby="step-{{ step.key }}-title">
     <h3 id="step-{{ step.key }}-title"><span class="pf-label">{{ loop.index }} of {{ steps|length }}</span>{{ step.title }}</h3>
-    <pre class="term term--cmd"><code>{{ step.command }}</code></pre>
+    <pre class="term term--cmd" tabindex="0" role="region" aria-label="Command {{ loop.index }}: {{ step.title }}"><code>{{ step.command }}</code></pre>
     {% if step.note %}
     <p class="note">{{ step.note }}</p>
     {% endif %}
     {% if step.stdout %}
-    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>{{ step.stdout }}</code></pre></div>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0" role="region" aria-label="Standard output of command {{ loop.index }}"><code>{{ step.stdout }}</code></pre></div>
     {% endif %}
     {% if step.stderr %}
-    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0"><code>{{ step.stderr }}</code></pre></div>
+    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0" role="region" aria-label="Standard error of command {{ loop.index }}"><code>{{ step.stderr }}</code></pre></div>
     {% endif %}
   </article>
   {% endfor %}

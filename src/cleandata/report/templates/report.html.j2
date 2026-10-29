@@ -88,7 +88,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% if report.kind == "profile" %}
 <h2 id="file">File</h2>
 {% set inp = report.input %}
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="File details"><table>
   <tbody>
     <tr><th scope="row">File</th><td>{{ inp.name }} &middot; {{ inp.size | number }} bytes</td></tr>
     <tr><th scope="row">SHA-256</th><td class="cell">{{ inp.sha256 }}</td></tr>
@@ -103,7 +103,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 </table></div>
 {% if report.sheets %}
 <h3>Sheets</h3>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Sheets"><table>
   <thead><tr><th scope="col">Sheet</th><th scope="col" class="num">Header row</th><th scope="col" class="num">Records</th><th scope="col">Analysed</th></tr></thead>
   <tbody>
 {% for s in report.sheets %}
@@ -114,7 +114,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% endif %}
 
 <h2 id="columns">Columns</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Columns"><table>
   <thead><tr><th scope="col" class="num">#</th><th scope="col">Header</th><th scope="col">Normalised</th><th scope="col" class="num">Non-empty</th><th scope="col" class="num">Distinct</th><th scope="col">Guess</th><th scope="col">Details</th></tr></thead>
   <tbody>
 {% for c in report.columns %}
@@ -153,7 +153,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% else %}
 
 <h2 id="headers">Header mapping</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Header mapping"><table>
   <thead><tr><th scope="col" class="num">#</th><th scope="col">Raw</th><th scope="col">Normalised</th><th scope="col">Final</th><th scope="col">Action</th></tr></thead>
   <tbody>
 {% for h in report.headers %}
@@ -163,7 +163,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 </table></div>
 
 <h2 id="columns">Columns before and after</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Columns before and after"><table>
   <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col" class="num">Non-empty before</th><th scope="col" class="num">Nulls after</th><th scope="col" class="num">Distinct after</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Filled</th><th scope="col" class="num">Changed</th><th scope="col">Details</th></tr></thead>
   <tbody>
 {% for name, c in report.columns.items() %}
@@ -201,7 +201,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 </table></div>
 
 <h2 id="rules">Rules</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Rules"><table>
   <thead><tr><th scope="col">Rule</th><th scope="col" class="num">Checked</th><th scope="col" class="num">Failed</th><th scope="col">Examples</th></tr></thead>
   <tbody>
 {% for r in report.rules %}
@@ -224,7 +224,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% endif %}
 </ul>
 {% if d.fuzzy and d.fuzzy.clusters %}
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Duplicate clusters"><table>
   <thead><tr><th scope="col">Cluster</th><th scope="col">Members</th><th scope="col">Scores</th></tr></thead>
   <tbody>
 {% for cl in d.fuzzy.clusters[:50] %}
@@ -241,7 +241,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% set rj = report.rejects %}
 <p>{{ rj.rows | number }} rows{% if rj.file %} in <code>{{ rj.file }}</code>{% endif %}: {% for stage, count in rj.by_stage.items() %}{{ stage }} {{ count | number }}{{ " · " if not loop.last }}{% endfor %}.</p>
 {% if rj.by_rule %}
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Rejects by rule"><table>
   <thead><tr><th scope="col">First failing rule</th><th scope="col" class="num">Rows</th></tr></thead>
   <tbody>
 {% for rule, count in rj.by_rule.items() %}
@@ -255,7 +255,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% endif %}
 {% if rj.preview %}
 <h3>First {{ rj.preview | length }} rejected rows</h3>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="First rejected rows"><table>
   <thead><tr><th scope="col" class="num">Row</th>{% if report.input.kind == "xlsx" %}<th scope="col">Sheet</th>{% endif %}<th scope="col">Stage</th><th scope="col">Rule</th><th scope="col">Detail</th>{% for name in rj.preview[0]["values"] %}<th scope="col">{{ name }}</th>{% endfor %}</tr></thead>
   <tbody>
 {% for p in rj.preview %}
@@ -272,7 +272,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 {% endif %}
 
 <h2 id="run">Run info</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Run information"><table>
   <tbody>
 {% if report.kind == "clean" %}
     <tr><th scope="row">Started</th><td>{{ run.started_at }}{% if run.duration_s is not none %} &middot; {{ run.duration_s }} s{% endif %}</td></tr>

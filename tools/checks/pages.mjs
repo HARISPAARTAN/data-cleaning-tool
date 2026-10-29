@@ -2,9 +2,10 @@
 // Usage: node tools/checks/pages.mjs
 // Env: PLAYWRIGHT_FROM (a package.json whose node_modules holds playwright), OUT (screenshot folder),
 //      THUMB_QUALITY (JPEG quality of thumb-1440.jpg, default 80),
-//      BASE (check a deployed copy instead of serving web/), PORT.
+//      BASE (check a deployed copy instead of serving web/), PORT (default 0: any free port).
 // Fails on a request to another host, an HTTP error, a console or page error, horizontal page scroll,
-// a broken in-page link or fragment, text below WCAG AA contrast, or more than 3 MB loaded per page.
+// a broken in-page link or fragment, text below WCAG AA contrast, more than 3 MB loaded per page, or a
+// scrollable region (overflow auto or scroll with overflowing content) that the keyboard cannot reach.
 // Writes <page>-<width>-<theme>.png per view and thumb-1440.jpg (the report, 1440 x 900, dark) for the hub card.
 import { createRequire } from 'node:module';
 import { createServer } from 'node:http';
@@ -17,7 +18,7 @@ const WEB = normalize(fileURLToPath(new URL('../../web/', import.meta.url)));
 const PREFIX = '/data-cleaning-tool/';
 const OUT = process.env.OUT || join(tmpdir(), 'data-cleaning-tool-shots');
 const LIMIT = 3_000_000;
-const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.csv': 'text/csv; charset=utf-8', '.yaml': 'text/plain; charset=utf-8', '.woff2': 'font/woff2', '.md': 'text/plain; charset=utf-8' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.csv': 'text/csv; charset=utf-8', '.yaml': 'text/plain; charset=utf-8', '.woff2': 'font/woff2', '.md': 'text/plain; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.jpg': 'image/jpeg' };
 const PAGES = [['index.html', 'usage'], ['demo/report.html', 'report']];
 const { chromium } = createRequire(process.env.PLAYWRIGHT_FROM || import.meta.url)('playwright');
 
@@ -44,11 +45,10 @@ function check(name, pass, detail = '') {
   console.log(`${pass ? 'ok  ' : 'FAIL'} ${name}${detail ? ` (${detail})` : ''}`);
 }
 
-const server = process.env.BASE ? null : await serve(Number(process.env.PORT || 8098));
-const BASE = process.env.BASE || `http://127.0.0.1:${server.address().port}${PREFIX}`;
-const ORIGIN = new URL(BASE).origin;
-await mkdir(OUT, { recursive: true });
-const browser = await chromium.launch({ channel: 'chrome', headless: true });
+let server = null;
+let browser = null;
+let BASE = '';
+let ORIGIN = '';
 
 function watch(page) {
   const problems = [];
@@ -112,9 +112,9 @@ const contrast = (page) => page.evaluate(() => {
 
 async function links(page, url) {
   const found = await page.evaluate(() => [...document.querySelectorAll('a[href]')].map((a) => a.getAttribute('href')));
+  const internal = [...new Set(found)].filter((href) => !/^https?:/.test(href));
   const problems = [];
-  for (const href of new Set(found)) {
-    if (/^https?:/.test(href)) continue;
+  for (const href of internal) {
     const target = new URL(href, url);
     if (target.hash && target.pathname === new URL(url).pathname) {
       const id = decodeURIComponent(target.hash.slice(1));
@@ -124,54 +124,88 @@ async function links(page, url) {
     const response = await fetch(target);
     if (!response.ok) problems.push(`${href}: HTTP ${response.status}`);
   }
-  return { count: found.length, problems };
+  return { count: internal.length, problems };
 }
 
-for (const [path, name] of PAGES) {
-  for (const theme of ['dark', 'light']) {
-    for (const width of [1440, 390]) {
-      const tag = `${name} ${width} ${theme}`;
-      const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: theme, reducedMotion: 'reduce' });
-      const page = await context.newPage();
-      const { problems, sizes } = watch(page);
-      const url = new URL(path, BASE).href;
-      await page.goto(url, { waitUntil: 'networkidle' });
-      await page.evaluate(() => document.fonts.ready);
-      check(`${tag}: theme attribute or scheme`, await page.evaluate((t) => (document.documentElement.dataset.theme ?? t) === t, theme));
-      const scroll = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
-      check(`${tag}: no horizontal page scroll`, scroll <= 0, `${scroll} px`);
-      if (name === 'usage') {
-        check(`${tag}: demo banner first in body`, await page.evaluate(() => document.body.firstElementChild?.classList.contains('pf-banner')));
-        check(`${tag}: theme toggle rendered`, await page.locator('.pf-theme-toggle').count() === 1);
-      }
-      const audit = await contrast(page);
-      check(`${tag}: text contrast AA (${audit.checked} elements)`, audit.failures.length === 0, audit.failures.slice(0, 5).join('; '));
-      const linked = await links(page, url);
-      check(`${tag}: ${linked.count} links resolve`, linked.problems.length === 0, linked.problems.join('; '));
-      const bytes = sizes.reduce((a, b) => a + b, 0);
-      check(`${tag}: page weight ${bytes.toLocaleString('en-GB')} bytes`, bytes <= LIMIT);
-      await page.screenshot({ path: join(OUT, `${name}-${width}-${theme}.png`), fullPage: width === 390 });
-      if (name === 'report' && width === 1440 && theme === 'dark') await page.screenshot({ path: join(OUT, 'thumb-1440.jpg'), type: 'jpeg', quality: Number(process.env.THUMB_QUALITY || 80) });
-      check(`${tag}: no external request, HTTP error or console error`, problems.length === 0, problems.join('; '));
-      await context.close();
+// Scrolling regions (overflow auto or scroll, and content larger than the box) must take the keyboard:
+// tabindex >= 0 on the region itself or a focusable element inside it.
+const scrollRegions = (page) => page.evaluate(() => {
+  const focusable = 'a[href], button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])';
+  const scrolling = ['auto', 'scroll'];
+  let count = 0;
+  const unreachable = [];
+  for (const el of document.querySelectorAll('body *')) {
+    const style = getComputedStyle(el);
+    const across = scrolling.includes(style.overflowX) && el.scrollWidth > el.clientWidth + 1;
+    const down = scrolling.includes(style.overflowY) && el.scrollHeight > el.clientHeight + 1;
+    if (!across && !down) continue;
+    count += 1;
+    if (el.tabIndex < 0 && !el.querySelector(focusable)) {
+      unreachable.push(`${el.tagName.toLowerCase()}.${[...el.classList].join('.')} "${el.textContent.trim().slice(0, 30)}"`);
     }
   }
-}
+  return { count, unreachable };
+});
 
-const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
-const page = await context.newPage();
-await page.goto(new URL('index.html', BASE).href, { waitUntil: 'networkidle' });
-await page.locator('.pf-theme-toggle').click();
-check('usage: the toggle switches to light', await page.evaluate(() => document.documentElement.dataset.theme === 'light'));
-const keyboard = [];
-for (let i = 0; i < 40; i += 1) {
-  await page.keyboard.press('Tab');
-  keyboard.push(await page.evaluate(() => document.activeElement?.className || document.activeElement?.tagName));
+try {
+  server = process.env.BASE ? null : await serve(Number(process.env.PORT || 0));
+  BASE = process.env.BASE || `http://127.0.0.1:${server.address().port}${PREFIX}`;
+  ORIGIN = new URL(BASE).origin;
+  await mkdir(OUT, { recursive: true });
+  browser = await chromium.launch({ channel: 'chrome', headless: true });
+
+  for (const [path, name] of PAGES) {
+    for (const theme of ['dark', 'light']) {
+      for (const width of [1440, 390]) {
+        const tag = `${name} ${width} ${theme}`;
+        const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme: theme, reducedMotion: 'reduce' });
+        const page = await context.newPage();
+        const { problems, sizes } = watch(page);
+        const url = new URL(path, BASE).href;
+        await page.goto(url, { waitUntil: 'networkidle' });
+        await page.evaluate(() => document.fonts.ready);
+        check(`${tag}: theme attribute or scheme`, await page.evaluate((t) => (document.documentElement.dataset.theme ?? t) === t, theme));
+        const scroll = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+        check(`${tag}: no horizontal page scroll`, scroll <= 0, `${scroll} px`);
+        if (name === 'usage') {
+          check(`${tag}: demo banner first in body`, await page.evaluate(() => document.body.firstElementChild?.classList.contains('pf-banner')));
+          check(`${tag}: theme toggle rendered`, await page.locator('.pf-theme-toggle').count() === 1);
+        }
+        const audit = await contrast(page);
+        check(`${tag}: text contrast AA (${audit.checked} elements)`, audit.failures.length === 0, audit.failures.slice(0, 5).join('; '));
+        const regions = await scrollRegions(page);
+        check(`${tag}: ${regions.count} scrolling regions, each reachable by keyboard`, regions.unreachable.length === 0, regions.unreachable.slice(0, 5).join('; '));
+        const linked = await links(page, url);
+        check(`${tag}: ${linked.count} internal links resolve`, linked.problems.length === 0, linked.problems.join('; '));
+        const bytes = sizes.reduce((a, b) => a + b, 0);
+        check(`${tag}: page weight ${bytes.toLocaleString('en-GB')} bytes`, bytes <= LIMIT);
+        await page.screenshot({ path: join(OUT, `${name}-${width}-${theme}.png`), fullPage: width === 390 });
+        if (name === 'report' && width === 1440 && theme === 'dark') await page.screenshot({ path: join(OUT, 'thumb-1440.jpg'), type: 'jpeg', quality: Number(process.env.THUMB_QUALITY || 80) });
+        check(`${tag}: no external request, HTTP error or console error`, problems.length === 0, problems.join('; '));
+        await context.close();
+      }
+    }
+  }
+
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, colorScheme: 'dark' });
+  const page = await context.newPage();
+  const { problems } = watch(page);
+  await page.goto(new URL('index.html', BASE).href, { waitUntil: 'networkidle' });
+  await page.locator('.pf-theme-toggle').click();
+  check('usage: the toggle switches to light', await page.evaluate(() => document.documentElement.dataset.theme === 'light'));
+  const keyboard = [];
+  for (let i = 0; i < 120; i += 1) {
+    await page.keyboard.press('Tab');
+    keyboard.push(await page.evaluate(() => document.activeElement?.className || document.activeElement?.tagName));
+    if (keyboard.some((c) => String(c).includes('pf-theme-toggle')) && keyboard.some((c) => String(c).includes('pf-table-wrap'))) break;
+  }
+  check('usage: Tab reaches the theme toggle and the scrollable tables', keyboard.some((c) => String(c).includes('pf-theme-toggle')) && keyboard.some((c) => String(c).includes('pf-table-wrap')), `${keyboard.length} Tab presses`);
+  check('usage: no external request, HTTP error or console error after the toggle', problems.length === 0, problems.join('; '));
+  await context.close();
+} finally {
+  await browser?.close();
+  server?.close();
 }
-check('usage: Tab reaches the theme toggle and the scrollable tables', keyboard.some((c) => String(c).includes('pf-theme-toggle')) && keyboard.some((c) => String(c).includes('pf-table-wrap')));
-await context.close();
-await browser.close();
-server?.close();
 const failed = results.filter((r) => !r).length;
 console.log(failed ? `${failed} of ${results.length} checks failed` : `all ${results.length} checks passed; screenshots in ${OUT}`);
 process.exit(failed ? 1 : 0);

@@ -239,7 +239,7 @@ footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border
 
 
 <h2 id="headers">Header mapping</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Header mapping"><table>
   <thead><tr><th scope="col" class="num">#</th><th scope="col">Raw</th><th scope="col">Normalised</th><th scope="col">Final</th><th scope="col">Action</th></tr></thead>
   <tbody>
     <tr><td class="num">1</td><td>Respondent ID</td><td><code>respondent_id</code></td><td><code>respondent_id</code></td><td>kept</td></tr>
@@ -260,7 +260,7 @@ footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border
 </table></div>
 
 <h2 id="columns">Columns before and after</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Columns before and after"><table>
   <thead><tr><th scope="col">Column</th><th scope="col">Type</th><th scope="col" class="num">Non-empty before</th><th scope="col" class="num">Nulls after</th><th scope="col" class="num">Distinct after</th><th scope="col" class="num">Invalid</th><th scope="col" class="num">Filled</th><th scope="col" class="num">Changed</th><th scope="col">Details</th></tr></thead>
   <tbody>
     <tr>
@@ -484,7 +484,7 @@ footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border
 </table></div>
 
 <h2 id="rules">Rules</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Rules"><table>
   <thead><tr><th scope="col">Rule</th><th scope="col" class="num">Checked</th><th scope="col" class="num">Failed</th><th scope="col">Examples</th></tr></thead>
   <tbody>
     <tr><td><code>respondent_id.required</code></td><td class="num">1,018</td><td class="num">1</td><td class="cell">r952 &#34;&#34;</td></tr>
@@ -540,7 +540,7 @@ r528 superseded by r783</td></tr>
 
 <h2 id="rejects">Rejects</h2>
 <p>36 rows in <code>rejects.csv</code>: read 0 · validate 18 · dedupe 18 · missing 0.</p>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Rejects by rule"><table>
   <thead><tr><th scope="col">First failing rule</th><th scope="col" class="num">Rows</th></tr></thead>
   <tbody>
     <tr><td><code>age.max</code></td><td class="num">3</td></tr>
@@ -554,7 +554,7 @@ r528 superseded by r783</td></tr>
 </table></div>
 <p>By column: <code>age</code> 5, <code>respondent_id</code> 3, <code>start_date</code> 10</p>
 <h3>First 20 rejected rows</h3>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="First rejected rows"><table>
   <thead><tr><th scope="col" class="num">Row</th><th scope="col">Stage</th><th scope="col">Rule</th><th scope="col">Detail</th><th scope="col">respondent_id</th><th scope="col">wave</th><th scope="col">start_date</th><th scope="col">completed_at</th><th scope="col">age</th><th scope="col">gender</th><th scope="col">country</th><th scope="col">household_income</th><th scope="col">spend_last_month_eur</th><th scope="col">satisfaction</th><th scope="col">nps</th><th scope="col">comment</th><th scope="col">interviewer_note</th></tr></thead>
   <tbody>
     <tr><td class="num">40</td><td>dedupe</td><td><code>dedupe.key.1</code></td><td class="cell">duplicate of r902</td><td class="cell">NG-129914</td><td class="cell">3</td><td class="cell">07.02.2026</td><td class="cell">07.02.2026 17:26</td><td class="cell">85</td><td class="cell">w</td><td class="cell">AT</td><td class="cell">79.500,00</td><td class="cell">1.825,82 €</td><td class="cell">2</td><td class="cell">5</td><td class="cell"></td><td class="cell"></td></tr>
@@ -582,7 +582,7 @@ r528 superseded by r783</td></tr>
 
 
 <h2 id="run">Run info</h2>
-<div class="table-wrap"><table>
+<div class="table-wrap" tabindex="0" role="region" aria-label="Run information"><table>
   <tbody>
     <tr><th scope="row">Started</th><td>2026-10-29T00:00:00Z</td></tr>
     <tr><th scope="row">Status</th><td>ok &middot; exit 0</td></tr>

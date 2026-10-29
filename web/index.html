@@ -62,9 +62,9 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
 <section id="install" aria-labelledby="install-title">
   <h2 id="install-title">Install and run</h2>
   <p class="prose">Install the command from the release wheel with <a href="https://docs.astral.sh/uv/">uv</a>, extras included:</p>
-  <pre class="term term--cmd"><code>uv tool install "data-cleaning-tool[fuzzy,parquet] @ https://github.com/HARISPAARTAN/data-cleaning-tool/releases/download/v0.1.0/data_cleaning_tool-0.1.0-py3-none-any.whl"</code></pre>
+  <pre class="term term--cmd" tabindex="0" role="region" aria-label="Install command"><code>uv tool install "data-cleaning-tool[fuzzy,parquet] @ https://github.com/HARISPAARTAN/data-cleaning-tool/releases/download/v0.1.0/data_cleaning_tool-0.1.0-py3-none-any.whl"</code></pre>
   <p class="prose">Or work from a clone, which also has the fixtures and profiles used below:</p>
-  <pre class="term term--cmd"><code>git clone https://github.com/HARISPAARTAN/data-cleaning-tool.git &amp;&amp; cd data-cleaning-tool &amp;&amp; uv sync --all-extras</code></pre>
+  <pre class="term term--cmd" tabindex="0" role="region" aria-label="Clone command"><code>git clone https://github.com/HARISPAARTAN/data-cleaning-tool.git &amp;&amp; cd data-cleaning-tool &amp;&amp; uv sync --all-extras</code></pre>
   <p class="prose">In a clone, put <code>uv run</code> in front of each <code>clean-data</code> command. The extras are optional: <code>fuzzy</code> (rapidfuzz) for fuzzy de-duplication, <code>parquet</code> (pyarrow) for Parquet output.</p>
 </section>
 
@@ -81,8 +81,8 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
   </div>
   <article class="step" id="step-profile" aria-labelledby="step-profile-title">
     <h3 id="step-profile-title"><span class="pf-label">1 of 4</span>Profile the file</h3>
-    <pre class="term term--cmd"><code>clean-data profile fixtures/01_survey_export_de.csv</code></pre>
-    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>file       01_survey_export_de.csv · 107,237 bytes · sha256 6ca4696f292c4a49
+    <pre class="term term--cmd" tabindex="0" role="region" aria-label="Command 1: Profile the file"><code>clean-data profile fixtures/01_survey_export_de.csv</code></pre>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0" role="region" aria-label="Standard output of command 1"><code>file       01_survey_export_de.csv · 107,237 bytes · sha256 6ca4696f292c4a49
 encoding   utf-8-sig (bom)
 delimiter  &#39;;&#39; (consistency 1.00)
 header     row 1
@@ -114,9 +114,9 @@ empty columns: column_14
   </article>
   <article class="step" id="step-init" aria-labelledby="step-init-title">
     <h3 id="step-init-title"><span class="pf-label">2 of 4</span>Write a profile skeleton</h3>
-    <pre class="term term--cmd"><code>clean-data init fixtures/01_survey_export_de.csv</code></pre>
+    <pre class="term term--cmd" tabindex="0" role="region" aria-label="Command 2: Write a profile skeleton"><code>clean-data init fixtures/01_survey_export_de.csv</code></pre>
     <p class="note">The first 30 of 89 lines.</p>
-    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code># Profile skeleton from clean-data init 0.1.0 for 01_survey_export_de.csv.
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0" role="region" aria-label="Standard output of command 2"><code># Profile skeleton from clean-data init 0.1.0 for 01_survey_export_de.csv.
 # Review every column. Validation rules (required, min, max, regex, allowed) and missing-value
 # strategies are not guessed: add them where the data needs them. Reference: docs/profile-reference.md
 version: 1
@@ -150,11 +150,11 @@ columns:
   </article>
   <article class="step" id="step-explain" aria-labelledby="step-explain-title">
     <h3 id="step-explain-title"><span class="pf-label">3 of 4</span>Dry run with --explain</h3>
-    <pre class="term term--cmd"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --dry-run --explain --report out/dry-run.json</code></pre>
+    <pre class="term term--cmd" tabindex="0" role="region" aria-label="Command 3: Dry run with --explain"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --dry-run --explain --report out/dry-run.json</code></pre>
     <p class="note">An excerpt of stderr: the plan, then the blocks for one column, the age rules, de-duplication and the fills. The full text is in the report&#39;s Explain section when --explain is given.</p>
-    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0" role="region" aria-label="Standard output of command 3"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
 </code></pre></div>
-    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0"><code>INFO: [plan]     in-memory run · profile survey-de
+    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0" role="region" aria-label="Standard error of command 3"><code>INFO: [plan]     in-memory run · profile survey-de
 INFO: [read]     encoding utf-8-sig (given) · delimiter &#39;;&#39; · header row 1 · footer rows 0
 …
 INFO: [dedupe]   dedupe.exact · dedupe.key.1 [respondent_id] keep last by completed_at
@@ -176,10 +176,10 @@ INFO: [missing]  satisfaction median_low 6  filled 15
   </article>
   <article class="step" id="step-clean" aria-labelledby="step-clean-title">
     <h3 id="step-clean-title"><span class="pf-label">4 of 4</span>Clean, with rejects and both reports</h3>
-    <pre class="term term--cmd"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --out out/cleaned.csv --rejects out/rejects.csv --report out/report.html --report out/report.json</code></pre>
-    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
+    <pre class="term term--cmd" tabindex="0" role="region" aria-label="Command 4: Clean, with rejects and both reports"><code>clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml --out out/cleaned.csv --rejects out/rejects.csv --report out/report.html --report out/report.json</code></pre>
+    <div class="stream"><span class="pf-label">stdout</span><pre class="term" tabindex="0" role="region" aria-label="Standard output of command 4"><code>read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · exit 0
 </code></pre></div>
-    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0"><code>INFO: read: 1026 records from 01_survey_export_de.csv
+    <div class="stream"><span class="pf-label">stderr</span><pre class="term" tabindex="0" role="region" aria-label="Standard error of command 4"><code>INFO: read: 1026 records from 01_survey_export_de.csv
 INFO: structure: 8 empty records dropped, 13 output columns
 INFO: normalise: 2723 cells changed
 INFO: types: 10 invalid cells, 0 set to null
@@ -232,7 +232,7 @@ INFO: write: 982 rows written to cleaned.csv
 <section id="files" aria-labelledby="files-title">
   <h2 id="files-title">Files of the demo run</h2>
   <ul class="files">
-    <li><a href="demo/report.html">report.html</a><span>40,429 bytes</span></li>
+    <li><a href="demo/report.html">report.html</a><span>40,767 bytes</span></li>
     <li><a href="demo/report.json">report.json</a><span>41,637 bytes</span></li>
     <li><a href="demo/profile.yaml">profile.yaml</a><span>2,257 bytes</span></li>
     <li><a href="demo/input.csv">input.csv</a><span>107,237 bytes</span></li>
