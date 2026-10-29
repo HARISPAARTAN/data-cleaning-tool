@@ -18,13 +18,24 @@ import jinja2
 from cleandata import __version__
 from cleandata.core.analyse import Analysis, ColumnAnalysis
 from cleandata.core.profile import parse_profile
-from cleandata.errors import InternalError
+from cleandata.errors import InputError, InternalError
 
 PLAIN_KEY: Final = re.compile(r"[a-z][a-z0-9_]*")
 YAML11_WORDS: Final = frozenset({"y", "n", "yes", "no", "on", "off", "true", "false", "null"})
 DEFAULT_DATE_FORMATS: Final = ["%Y-%m-%d"]
 DEFAULT_DATETIME_FORMATS: Final = ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 COMMENT_WIDTH: Final = 40
+NAME_WIDTH: Final = 120
+# YAML 1.1 loaders end a comment and fold a quoted scalar at these three, which JSON leaves as they are
+YAML_BREAKS: Final = {"\x85": "\\u0085", " ": "\\u2028", " ": "\\u2029"}
+
+
+def _json_body(text: str) -> str:
+    """The text as the inside of a JSON string, with quotes, backslashes and every line break escaped."""
+    escaped = json.dumps(text, ensure_ascii=False)[1:-1]
+    for char, replacement in YAML_BREAKS.items():
+        escaped = escaped.replace(char, replacement)
+    return escaped
 
 
 def quote(value: object) -> str:
@@ -37,7 +48,7 @@ def quote(value: object) -> str:
         return json.dumps(value)
     if isinstance(value, list | tuple):
         return "[" + ", ".join(quote(item) for item in value) + "]"
-    return json.dumps(str(value), ensure_ascii=False)
+    return '"' + _json_body(str(value)) + '"'
 
 
 def key(name: str) -> str:
@@ -47,10 +58,10 @@ def key(name: str) -> str:
     return quote(name)
 
 
-def comment_text(text: str) -> str:
-    """One line, control characters escaped, at most 40 characters."""
-    escaped = json.dumps(text, ensure_ascii=False)[1:-1]
-    return escaped if len(escaped) <= COMMENT_WIDTH else escaped[: COMMENT_WIDTH - 1] + "~"
+def comment_text(text: str, width: int = COMMENT_WIDTH) -> str:
+    """One line, control characters escaped, at most 40 characters (``width`` for the file name)."""
+    escaped = _json_body(text)
+    return escaped if len(escaped) <= width else escaped[: width - 1] + "~"
 
 
 def column_entry(
@@ -94,16 +105,19 @@ def render_skeleton(analysis: Analysis, name: str) -> str:
     date_formats = analysis.date_formats or DEFAULT_DATE_FORMATS
     datetime_formats = analysis.datetime_formats or DEFAULT_DATETIME_FORMATS
     selected = analysis.selected_sheets
-    header_rows = {header for sheet, header, _ in analysis.all_sheets if sheet in selected}
-    if info.kind == "xlsx":
-        header_row: object = header_rows.pop() if len(header_rows) == 1 else "auto"
-    else:
-        header_row = info.header_row
     columns = [
         column_entry(item, analysis, date_formats, datetime_formats)
         for item in analysis.columns
         if item.non_empty > 0
     ]
+    if not columns:
+        raise InputError(f"no usable columns found in {info.name} (no records, or every column is empty)")
+    if info.kind == "xlsx":
+        # the rows the sheets were actually read with, so an explicit --header-row reaches the skeleton
+        header_rows = {sheet.header_row for sheet in info.sheets}
+        header_row: object = header_rows.pop() if len(header_rows) == 1 else "auto"
+    else:
+        header_row = info.header_row
     environment = jinja2.Environment(
         loader=jinja2.PackageLoader("cleandata.skeleton", "templates"),
         autoescape=False,
@@ -114,10 +128,12 @@ def render_skeleton(analysis: Analysis, name: str) -> str:
     )
     environment.filters["q"] = quote
     environment.filters["key"] = key
+    environment.filters["comment_text"] = comment_text
     decimal, thousands = analysis.locale
     return environment.get_template("profile.yaml.j2").render(
         version=__version__,
         name=name,
+        name_width=NAME_WIDTH,
         info=info,
         analysis=analysis,
         header_row=header_row,

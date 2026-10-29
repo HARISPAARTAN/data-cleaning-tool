@@ -32,7 +32,7 @@ from cleandata.core.sniff import (
     is_blank,
 )
 from cleandata.core.stats import DISTINCT_CAP, TOP
-from cleandata.core.text import TextSettings, clean_text, has_control, has_whitespace_issue, is_nfc
+from cleandata.core.text import TextSettings, clean_text, display, has_control, has_whitespace_issue, is_nfc
 from cleandata.errors import InputError
 
 DEFAULT_MAX_ROWS: Final = 200_000
@@ -57,6 +57,8 @@ class Candidate:
             grouping = "none" if self.thousands is None else repr(self.thousands)
             return f"{self.type}(decimal={self.decimal!r}, thousands={grouping})"
         if self.type in ("date", "datetime"):
+            if not self.patterns and self.share > 0:
+                return f"{self.type} (native)"  # every hit was a native Excel date, no text pattern
             return f"{self.type}({', '.join(self.patterns)})"
         return self.type
 
@@ -433,7 +435,10 @@ def analyse_file(
         guess = item.guess
         if guess is None or guess.type not in ("integer", "number") or guess.decimal is None:
             continue
-        shares = {(c.decimal, c.thousands): c.share for c in item.candidates if c.type == guess.type}
+        # styles maps each style to (number share, integer share); a column every style parses equally
+        # well says nothing about the file's locale and does not vote
+        which = 0 if guess.type == "number" else 1
+        shares = {style: pair[which] for style, pair in item.styles.items()}
         if (
             len(set(shares.values())) <= 1
             and guess.share == 1.0
@@ -542,10 +547,19 @@ def analysis_report(analysis: Analysis) -> dict[str, Any]:
     }
 
 
+TABLE_WIDTH: Final = 26
+
+
+def _fit(text: str) -> str:
+    """One table cell: line breaks, tabs and other invisible characters escaped, cut to the column width."""
+    shown = display(text)
+    return shown if len(shown) <= TABLE_WIDTH else shown[: TABLE_WIDTH - 1] + "~"
+
+
 def text_table(analysis: Analysis) -> str:
     """The table ``clean-data profile`` prints to stdout."""
     info = analysis.info
-    lines = [f"file       {info.name} · {info.size:,} bytes · sha256 {info.sha256[:16]}"]
+    lines = [f"file       {display(info.name)} · {info.size:,} bytes · sha256 {info.sha256[:16]}"]
     if info.kind == "csv":
         confidence = "" if info.encoding_confidence is None else f", confidence {info.encoding_confidence}"
         lines.append(f"encoding   {info.encoding} ({info.encoding_method}{confidence})")
@@ -557,7 +571,7 @@ def text_table(analysis: Analysis) -> str:
         for name, header, records in analysis.all_sheets:
             mark = "*" if name in analysis.selected_sheets else " "
             row = "none" if header is None else f"row {header}"
-            lines.append(f"sheet    {mark} {name}: header {row}, {records} records")
+            lines.append(f"sheet    {mark} {display(name)}: header {row}, {records} records")
     lines.append(
         f"records    {analysis.analysed:,} · empty {analysis.empty} · short {info.short_records} "
         f"· malformed {info.malformed} · duplicate {analysis.duplicate_records}"
@@ -571,10 +585,10 @@ def text_table(analysis: Analysis) -> str:
         guess = "string" if item.guess is None else f"{item.guess.label()} {item.guess.share * 100:.1f} %"
         if item.non_empty == 0:
             guess = "empty"
-        raw = item.raw if len(item.raw) <= 26 else item.raw[:25] + "~"
+        distinct = f"{item.distinct}+" if item.distinct_capped else str(item.distinct)
         lines.append(
-            f"{item.position:>3}  {raw:<26} {item.normalised:<26} "
-            f"{item.non_empty:>9} {item.distinct:>8}  {guess}"
+            f"{item.position:>3}  {_fit(item.raw):<26} {_fit(item.normalised):<26} "
+            f"{item.non_empty:>9} {distinct:>8}  {guess}"
         )
         for token, count in item.null_like.items():
             lines.append(f"{'':>5}null-like {token!r} x{count}")
@@ -582,7 +596,7 @@ def text_table(analysis: Analysis) -> str:
             lines.append(f"{'':>5}note: {note}")
     if analysis.duplicate_headers:
         lines.append("")
-        lines.append("repeated headers: " + ", ".join(analysis.duplicate_headers))
+        lines.append("repeated headers: " + ", ".join(display(name) for name in analysis.duplicate_headers))
     if analysis.empty_columns:
         lines.append("empty columns: " + ", ".join(analysis.empty_columns))
     for warning in analysis.warnings:
