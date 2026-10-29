@@ -33,6 +33,7 @@ from typing import Final
 from charset_normalizer import CharsetMatch, from_bytes
 
 from cleandata.core.coerce import ParseSettings, parse_decimal
+from cleandata.core.encodings import require_text_encoding
 from cleandata.errors import InputError
 
 ENCODING_SAMPLE: Final = 1 << 20
@@ -198,12 +199,10 @@ def _western(names: Sequence[str]) -> bool:
 
 
 def _check_codec(encoding: str) -> None:
-    """Raise InputError for a name that is not a Python text encoding."""
+    """Raise InputError for a name that is not a Python text encoding, by the check the profile uses."""
     try:
-        b"a".decode(encoding)
-    except UnicodeDecodeError:
-        pass  # the codec exists; this one byte is just not a whole character in it
-    except LookupError:
+        require_text_encoding(encoding)
+    except ValueError:
         raise InputError(
             f'unknown encoding "{encoding}"; set input.encoding to a Python text encoding such as utf-8'
         ) from None

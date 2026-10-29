@@ -260,7 +260,7 @@ def test_a_given_encoding_is_returned_without_reading_the_file(tmp_path: Path) -
     assert resolve_encoding(tmp_path / "missing.csv", "cp1252") == EncodingGuess("cp1252", "given", None)
 
 
-@pytest.mark.parametrize("name", ["no-such-codec", "rot13", "hex"])
+@pytest.mark.parametrize("name", ["no-such-codec", "rot13", "hex", "idna"])
 def test_an_unknown_or_non_text_given_encoding_is_an_input_error(tmp_path: Path, name: str) -> None:
     with pytest.raises(InputError, match="unknown encoding"):
         resolve_encoding(tmp_path / "a.csv", name)
