@@ -49,7 +49,7 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
   <ul class="points">
     <li>Reads CSV and Excel the same way every time: encoding and delimiter sniffing, header offsets, footer rows, several sheets, short and malformed records.</li>
     <li>Normalises headers to snake_case and cleans text: Unicode form, invisible characters, whitespace, null tokens, case and value maps.</li>
-    <li>Converts types with German and English number and date formats; a value that does not parse is rejected, never guessed.</li>
+    <li>Converts types with German and English number and date formats; a value that does not parse is rejected or, where the profile says so, set to null; never guessed.</li>
     <li>Removes exact and key duplicates (fuzzy matching as an option), fills missing values per column and checks ranges, patterns and allowed values.</li>
     <li>Writes the cleaned file (CSV, Excel or Parquet), every removed row with its reason, and a JSON and HTML report with before and after statistics.</li>
   </ul>
