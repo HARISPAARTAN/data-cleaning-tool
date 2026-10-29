@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=../docs/profile.schema.json
+version: 1
+name: wave-workbook
+description: Interview waves from the regional panel study, one sheet per wave
+input:
+  header_row: 4
+  skip_footer_rows: 1
+  sheets: ["Wave *"]
+  sheet_column: source_sheet
+  locale: {date_formats: ["%d.%m.%Y"]}
+headers:
+  normalise: snake_case
+columns:
+  respondent_id: {type: string, case: upper, required: true, regex: '^NG-\d{6}$'}
+  interview_date: {type: date, required: true}
+  region:
+    type: string
+    allowed: [North East, North West, Yorkshire and the Humber, East Midlands, West Midlands, East of England,
+              London, South East, South West, Wales, Scotland, Northern Ireland]
+  score: {type: integer, min: 0, max: 10}
+  total_score: {type: number, on_invalid: "null"}
+  mode: {type: string, optional: true, allowed: [online, phone]}
+dedupe:
+  exact: true
+  keys: [{columns: [respondent_id, source_sheet], keep: last}]
+output:
+  xlsx: {sheet_name: cleaned}
+report:
+  title: Wave workbook
+  banner: Demo with invented data for a fictional company
+  footer: Rebuilt from memory as a demo. The original client's name and data are not used.

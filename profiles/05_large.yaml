@@ -1,0 +1,32 @@
+# yaml-language-server: $schema=../docs/profile.schema.json
+# Chunk-compatible: no fuzzy matching, key rule keep first without order_by, constant fill.
+version: 1
+name: panel-large
+description: Large partner file in the partner layout, cleaned in chunks
+input:
+  encoding: utf-8
+  delimiter: ","
+  locale: {decimal: ".", thousands: ",", date_formats: ["%Y-%m-%d", "%d/%m/%Y"]}
+headers:
+  normalise: snake_case
+columns:
+  partner_id: {type: string, required: true, allowed: [PA, PB]}
+  panelist_ref: {type: string, case: upper, required: true, regex: '^P[AB]-\d{5}$'}
+  first_name: {type: string}
+  last_name: {type: string}
+  email: {type: string, case: lower, required: true, regex: '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$'}
+  country:
+    type: string
+    map: {gb: GB, uk: GB, united kingdom: GB, great britain: GB, ie: IE, ireland: IE, éire: IE,
+          de: DE, germany: DE, deutschland: DE, nl: NL, netherlands: NL, the netherlands: NL, holland: NL}
+    allowed: [GB, IE, DE, NL]
+  year_of_birth: {type: integer, min: 1925, max: 2010}
+  points: {type: integer, min: 0, missing: {strategy: constant, value: 0}}
+  opt_in: {type: boolean}
+  joined: {type: date}
+dedupe:
+  exact: true
+  keys: [{columns: [email], keep: first}]
+report:
+  title: Large partner file
+  redact: [email, first_name, last_name]

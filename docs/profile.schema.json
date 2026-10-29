@@ -1,0 +1,903 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "ColumnRule": {
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "enum": [
+            "string",
+            "integer",
+            "number",
+            "boolean",
+            "date",
+            "datetime"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "optional": {
+          "default": false,
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "null_tokens": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Null Tokens",
+          "type": "array"
+        },
+        "unicode": {
+          "anyOf": [
+            {
+              "enum": [
+                "NFC",
+                "NFKC",
+                "none"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unicode"
+        },
+        "trim": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Trim"
+        },
+        "collapse_whitespace": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Collapse Whitespace"
+        },
+        "remove_control": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remove Control"
+        },
+        "case": {
+          "anyOf": [
+            {
+              "enum": [
+                "keep",
+                "lower",
+                "upper",
+                "title"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Case"
+        },
+        "map": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Map",
+          "type": "object"
+        },
+        "strip": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Strip",
+          "type": "array"
+        },
+        "locale": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocaleOverride"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "on_invalid": {
+          "default": "reject",
+          "enum": [
+            "reject",
+            "null"
+          ],
+          "title": "On Invalid",
+          "type": "string"
+        },
+        "required": {
+          "default": false,
+          "title": "Required",
+          "type": "boolean"
+        },
+        "min": {
+          "default": null,
+          "title": "Min"
+        },
+        "max": {
+          "default": null,
+          "title": "Max"
+        },
+        "regex": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Regex"
+        },
+        "allowed": {
+          "anyOf": [
+            {
+              "items": {},
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Allowed"
+        },
+        "missing": {
+          "$ref": "#/$defs/MissingRule"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "ColumnRule",
+      "type": "object"
+    },
+    "CsvOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "delimiter": {
+          "default": ",",
+          "title": "Delimiter",
+          "type": "string"
+        },
+        "encoding": {
+          "default": "utf-8",
+          "title": "Encoding",
+          "type": "string"
+        },
+        "bom": {
+          "default": false,
+          "title": "Bom",
+          "type": "boolean"
+        }
+      },
+      "title": "CsvOutput",
+      "type": "object"
+    },
+    "DedupeOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "exact": {
+          "default": true,
+          "title": "Exact",
+          "type": "boolean"
+        },
+        "keys": {
+          "items": {
+            "$ref": "#/$defs/KeyRule"
+          },
+          "title": "Keys",
+          "type": "array"
+        },
+        "fuzzy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FuzzyRule"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "DedupeOptions",
+      "type": "object"
+    },
+    "FuzzyField": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "scorer": {
+          "default": "token_sort_ratio",
+          "enum": [
+            "ratio",
+            "token_sort_ratio",
+            "token_set_ratio"
+          ],
+          "title": "Scorer",
+          "type": "string"
+        },
+        "weight": {
+          "default": 1.0,
+          "exclusiveMinimum": 0,
+          "title": "Weight",
+          "type": "number"
+        }
+      },
+      "required": [
+        "columns"
+      ],
+      "title": "FuzzyField",
+      "type": "object"
+    },
+    "FuzzyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "block_on": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Block On",
+          "type": "array"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/FuzzyField"
+          },
+          "minItems": 1,
+          "title": "Fields",
+          "type": "array"
+        },
+        "threshold": {
+          "default": 90,
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Threshold",
+          "type": "number"
+        },
+        "action": {
+          "default": "flag",
+          "enum": [
+            "flag",
+            "remove"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "cluster_column": {
+          "default": "dup_cluster",
+          "title": "Cluster Column",
+          "type": "string"
+        },
+        "max_block_size": {
+          "default": 2000,
+          "minimum": 2,
+          "title": "Max Block Size",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "block_on",
+        "fields"
+      ],
+      "title": "FuzzyRule",
+      "type": "object"
+    },
+    "HeaderOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "normalise": {
+          "default": "snake_case",
+          "enum": [
+            "snake_case",
+            "keep"
+          ],
+          "title": "Normalise",
+          "type": "string"
+        },
+        "rename": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Rename",
+          "type": "object"
+        },
+        "drop": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Drop",
+          "type": "array"
+        }
+      },
+      "title": "HeaderOptions",
+      "type": "object"
+    },
+    "InputOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "encoding": {
+          "default": "auto",
+          "title": "Encoding",
+          "type": "string"
+        },
+        "delimiter": {
+          "default": "auto",
+          "title": "Delimiter",
+          "type": "string"
+        },
+        "quotechar": {
+          "default": "\"",
+          "maxLength": 1,
+          "minLength": 1,
+          "title": "Quotechar",
+          "type": "string"
+        },
+        "header_row": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "const": "auto",
+              "type": "string"
+            }
+          ],
+          "default": 1,
+          "title": "Header Row"
+        },
+        "skip_footer_rows": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Skip Footer Rows",
+          "type": "integer"
+        },
+        "sheets": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sheets"
+        },
+        "sheet_column": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sheet Column"
+        },
+        "drop_empty_rows": {
+          "default": true,
+          "title": "Drop Empty Rows",
+          "type": "boolean"
+        },
+        "drop_empty_columns": {
+          "default": false,
+          "title": "Drop Empty Columns",
+          "type": "boolean"
+        },
+        "null_tokens": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Null Tokens",
+          "type": "array"
+        },
+        "locale": {
+          "$ref": "#/$defs/Locale"
+        }
+      },
+      "title": "InputOptions",
+      "type": "object"
+    },
+    "KeyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "columns": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Columns",
+          "type": "array"
+        },
+        "keep": {
+          "default": "first",
+          "enum": [
+            "first",
+            "last"
+          ],
+          "title": "Keep",
+          "type": "string"
+        },
+        "order_by": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Order By"
+        }
+      },
+      "required": [
+        "columns"
+      ],
+      "title": "KeyRule",
+      "type": "object"
+    },
+    "Locale": {
+      "additionalProperties": false,
+      "properties": {
+        "decimal": {
+          "default": ".",
+          "enum": [
+            ".",
+            ","
+          ],
+          "title": "Decimal",
+          "type": "string"
+        },
+        "thousands": {
+          "anyOf": [
+            {
+              "enum": [
+                ",",
+                ".",
+                " ",
+                "'"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thousands"
+        },
+        "date_formats": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Date Formats",
+          "type": "array"
+        },
+        "datetime_formats": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Datetime Formats",
+          "type": "array"
+        },
+        "true_values": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "True Values",
+          "type": "array"
+        },
+        "false_values": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "False Values",
+          "type": "array"
+        }
+      },
+      "title": "Locale",
+      "type": "object"
+    },
+    "LocaleOverride": {
+      "additionalProperties": false,
+      "description": "A partial ``Locale`` for one column; keys left out inherit ``input.locale``.",
+      "properties": {
+        "decimal": {
+          "anyOf": [
+            {
+              "enum": [
+                ".",
+                ","
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Decimal"
+        },
+        "thousands": {
+          "anyOf": [
+            {
+              "enum": [
+                ",",
+                ".",
+                " ",
+                "'"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Thousands"
+        },
+        "date_formats": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Date Formats"
+        },
+        "datetime_formats": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Datetime Formats"
+        },
+        "true_values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "True Values"
+        },
+        "false_values": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "False Values"
+        }
+      },
+      "title": "LocaleOverride",
+      "type": "object"
+    },
+    "MissingRule": {
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "default": "keep",
+          "enum": [
+            "keep",
+            "drop",
+            "constant",
+            "median",
+            "ffill"
+          ],
+          "title": "Strategy",
+          "type": "string"
+        },
+        "value": {
+          "default": null,
+          "title": "Value"
+        }
+      },
+      "title": "MissingRule",
+      "type": "object"
+    },
+    "OutputOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "sort_by": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Sort By",
+          "type": "array"
+        },
+        "csv": {
+          "$ref": "#/$defs/CsvOutput"
+        },
+        "xlsx": {
+          "$ref": "#/$defs/XlsxOutput"
+        }
+      },
+      "title": "OutputOptions",
+      "type": "object"
+    },
+    "QualityGate": {
+      "additionalProperties": false,
+      "properties": {
+        "max_reject_rate": {
+          "anyOf": [
+            {
+              "maximum": 1,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Reject Rate"
+        }
+      },
+      "title": "QualityGate",
+      "type": "object"
+    },
+    "ReportOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "examples_per_rule": {
+          "default": 5,
+          "maximum": 50,
+          "minimum": 0,
+          "title": "Examples Per Rule",
+          "type": "integer"
+        },
+        "preview_rows": {
+          "default": 20,
+          "minimum": 0,
+          "title": "Preview Rows",
+          "type": "integer"
+        },
+        "redact": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Redact",
+          "type": "array"
+        },
+        "banner": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Banner"
+        },
+        "footer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Footer"
+        }
+      },
+      "title": "ReportOptions",
+      "type": "object"
+    },
+    "TextOptions": {
+      "additionalProperties": false,
+      "properties": {
+        "unicode": {
+          "default": "NFC",
+          "enum": [
+            "NFC",
+            "NFKC",
+            "none"
+          ],
+          "title": "Unicode",
+          "type": "string"
+        },
+        "trim": {
+          "default": true,
+          "title": "Trim",
+          "type": "boolean"
+        },
+        "collapse_whitespace": {
+          "default": true,
+          "title": "Collapse Whitespace",
+          "type": "boolean"
+        },
+        "remove_control": {
+          "default": true,
+          "title": "Remove Control",
+          "type": "boolean"
+        },
+        "case": {
+          "default": "keep",
+          "enum": [
+            "keep",
+            "lower",
+            "upper",
+            "title"
+          ],
+          "title": "Case",
+          "type": "string"
+        }
+      },
+      "title": "TextOptions",
+      "type": "object"
+    },
+    "XlsxOutput": {
+      "additionalProperties": false,
+      "properties": {
+        "sheet_name": {
+          "default": "cleaned",
+          "maxLength": 31,
+          "minLength": 1,
+          "pattern": "^[^\\[\\]:*?/\\\\]+$",
+          "title": "Sheet Name",
+          "type": "string"
+        }
+      },
+      "title": "XlsxOutput",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "const": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "name": {
+      "minLength": 1,
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "input": {
+      "$ref": "#/$defs/InputOptions"
+    },
+    "headers": {
+      "$ref": "#/$defs/HeaderOptions"
+    },
+    "text": {
+      "$ref": "#/$defs/TextOptions"
+    },
+    "columns": {
+      "additionalProperties": {
+        "$ref": "#/$defs/ColumnRule"
+      },
+      "minProperties": 1,
+      "title": "Columns",
+      "type": "object"
+    },
+    "keep_unlisted": {
+      "default": false,
+      "title": "Keep Unlisted",
+      "type": "boolean"
+    },
+    "dedupe": {
+      "$ref": "#/$defs/DedupeOptions"
+    },
+    "quality": {
+      "$ref": "#/$defs/QualityGate"
+    },
+    "output": {
+      "$ref": "#/$defs/OutputOptions"
+    },
+    "report": {
+      "$ref": "#/$defs/ReportOptions"
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "columns"
+  ],
+  "title": "Profile",
+  "type": "object"
+}

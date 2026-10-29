@@ -1,0 +1,45 @@
+# yaml-language-server: $schema=../docs/profile.schema.json
+version: 1
+name: survey-de
+description: Wave export of the German-language panel study (survey platform, German locale)
+input:
+  encoding: utf-8-sig
+  delimiter: ";"
+  drop_empty_columns: true
+  null_tokens: ["", "k.A.", "n/a", "-"]
+  locale: {decimal: ",", thousands: ".", date_formats: ["%d.%m.%Y", "%Y-%m-%d", "%d/%m/%Y"], datetime_formats: ["%d.%m.%Y %H:%M"]}
+headers:
+  normalise: snake_case
+  rename: {welle: wave, startdatum: start_date, abgeschlossen_am: completed_at, alter: age, geschlecht: gender, land: country,
+           haushaltseinkommen_eur: household_income, ausgaben_letzter_monat_eur: spend_last_month_eur,
+           zufriedenheit: satisfaction, kommentar: comment, kommentar_2: interviewer_note}
+text: {unicode: NFC, trim: true, collapse_whitespace: true, remove_control: true}
+columns:
+  respondent_id: {type: string, case: upper, required: true, regex: '^NG-\d{6}$'}
+  wave: {type: integer, required: true, allowed: [1, 2, 3, 4]}
+  start_date: {type: date, required: true}
+  completed_at: {type: datetime, required: true}
+  age: {type: integer, min: 16, max: 99}
+  gender:
+    type: string
+    map: {w: female, weiblich: female, m: male, männlich: male, d: diverse, divers: diverse, keine angabe: not_stated}
+    allowed: [female, male, diverse, not_stated]
+  country:
+    type: string
+    map: {deutschland: DE, de: DE, österreich: AT, at: AT, schweiz: CH, ch: CH}
+    allowed: [DE, AT, CH]
+  household_income: {type: number, min: 0, missing: median}
+  spend_last_month_eur: {type: number, strip: ["€"], min: 0}
+  satisfaction: {type: integer, min: 1, max: 10, missing: median}
+  nps: {type: integer, min: 0, max: 10}
+  comment: {type: string}
+  interviewer_note: {type: string, collapse_whitespace: false}
+keep_unlisted: false
+dedupe: {exact: true, keys: [{columns: [respondent_id], keep: last, order_by: completed_at}]}
+quality: {max_reject_rate: 0.05}
+output: {csv: {delimiter: ",", encoding: utf-8, bom: false}, xlsx: {sheet_name: cleaned}}
+report:
+  title: Survey wave export, German locale
+  examples_per_rule: 5
+  banner: Demo with invented data for a fictional company
+  footer: Rebuilt from memory as a demo. The original client's name and data are not used.

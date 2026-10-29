@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../docs/profile.schema.json
+version: 1
+name: legacy-partner
+description: Tab-separated Latin-1 export from a partner's old system
+input:
+  encoding: latin-1
+  delimiter: "\t"
+  drop_empty_columns: true
+  locale: {decimal: ".", thousands: ",", date_formats: ["%d/%m/%Y"]}
+headers:
+  normalise: snake_case
+columns:
+  partner_ref: {type: string, case: upper, required: true, regex: '^PB-\d{5}$'}
+  name: {type: string, required: true}
+  city: {type: string}
+  country: {type: string}
+  amount_gbp: {type: number, strip: ["£"], min: 0}
+  paid_on: {type: date}
+  active: {type: boolean}
+  note: {type: string, collapse_whitespace: false}
+output:
+  csv: {encoding: utf-8}
+report:
+  title: Legacy partner export (Latin-1)
+  redact: [name]
+  banner: Demo with invented data for a fictional company
+  footer: Rebuilt from memory as a demo. The original client's name and data are not used.
