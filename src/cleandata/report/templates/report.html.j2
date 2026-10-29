@@ -52,6 +52,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
 
 <h2 id="flow">Row flow</h2>
 <p>read {{ rows.read | number }} = out {{ rows.out | number }} + rejected {{ rows.rejected | number }} + duplicates {{ rows.duplicates | number }} + empty {{ rows.empty | number }}. Reject rate {{ rows.reject_rate | percent }}{% if rows.max_reject_rate is not none %} against a gate of {{ rows.max_reject_rate | percent }}{% endif %}.</p>
+{% if segments %}
 <svg class="flow" viewBox="0 0 1000 40" preserveAspectRatio="none" role="img" aria-label="Row flow: {% for s in segments %}{{ s.label }} {{ s.count }}{{ ", " if not loop.last }}{% endfor %}">
 {% for s in segments %}
   <rect class="seg--{{ s.key }}" x="{{ s.x }}" y="0" width="{{ s.width }}" height="40"><title>{{ s.label }}: {{ s.count | number }}</title></rect>
@@ -62,6 +63,7 @@ try { var t = localStorage.getItem("hh-theme"); if (t === "light" || t === "dark
   <li><span class="swatch seg--{{ s.key }}" aria-hidden="true"></span>{{ s.label }} {{ s.count | number }}</li>
 {% endfor %}
 </ul>
+{% endif %}
 {% endif %}
 
 <h2 id="warnings">Warnings</h2>

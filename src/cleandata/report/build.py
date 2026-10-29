@@ -142,7 +142,9 @@ def _columns(data: ReportInput) -> dict[str, Any]:
     for name in data.columns:
         plan = data.plans.get(name)
         tally = ledger.columns.get(name)
-        stats = data.stats.get(name, {})
+        stats = data.stats.get(name)
+        if stats is None:
+            raise ValueError(f"no statistics for column {name!r}")
         if plan is not None:
             source = "profile"
         elif name in data.data_columns:
@@ -235,7 +237,7 @@ def build_report(data: ReportInput) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
         "kind": "clean",
-        "title": ("Dry run: " if data.dry_run else "") + (profile.report.title or profile.name),
+        "title": profile.report.title or profile.name,
         "tool": tool_info(),
         "run": {
             "started_at": data.started_at,
@@ -312,6 +314,6 @@ def write_reports(report: Mapping[str, Any], targets: Sequence[Path]) -> None:
     rounded: dict[str, Any] = round_floats(dict(report))
     for target in targets:
         if target.suffix.lower() == ".json":
-            write_text(target, json.dumps(rounded, ensure_ascii=False, indent=2) + "\n")
+            write_text(target, to_json(rounded))
         else:
             write_text(target, render_html(rounded))

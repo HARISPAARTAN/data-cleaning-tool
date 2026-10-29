@@ -32,7 +32,10 @@ def number(value: object) -> str:
     if isinstance(value, int):
         return f"{value:,}"
     if isinstance(value, float):
-        return f"{value:,.6g}" if abs(value) < 1e15 else f"{value:.6g}"
+        text = f"{value:,.6g}"
+        # Large values are rounded to 6 significant digits upstream, so plain digits lose nothing;
+        # tiny values keep the exponent, since plain digits would show them as 0.
+        return f"{value:,.0f}" if "e" in text and abs(value) >= 1 else text
     return str(value)
 
 
