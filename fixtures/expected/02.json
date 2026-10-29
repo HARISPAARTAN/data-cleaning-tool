@@ -1,0 +1,579 @@
+{
+  "fixture": "02_partner_respondents.csv",
+  "profile": "02_partner.yaml",
+  "rows": {
+    "read": 2480,
+    "empty": 0,
+    "rejected": 17,
+    "duplicates": 65,
+    "out": 2398
+  },
+  "out_columns": 11,
+  "rules": {
+    "country.allowed": 7,
+    "dedupe.exact": 25,
+    "dedupe.key.1": 40,
+    "email.regex": 6,
+    "year_of_birth.max": 2,
+    "year_of_birth.min": 2
+  },
+  "fills": {},
+  "rejects": [
+    {
+      "source_row": 112,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r571"
+    },
+    {
+      "source_row": 133,
+      "rule": "year_of_birth.max",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 170,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r390"
+    },
+    {
+      "source_row": 197,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 204,
+      "rule": "year_of_birth.min",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 226,
+      "rule": "year_of_birth.max",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 254,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2208"
+    },
+    {
+      "source_row": 280,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 306,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r84"
+    },
+    {
+      "source_row": 326,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2113"
+    },
+    {
+      "source_row": 392,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r185"
+    },
+    {
+      "source_row": 399,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r36"
+    },
+    {
+      "source_row": 406,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r984"
+    },
+    {
+      "source_row": 458,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2126"
+    },
+    {
+      "source_row": 476,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1211"
+    },
+    {
+      "source_row": 484,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r301"
+    },
+    {
+      "source_row": 511,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r344"
+    },
+    {
+      "source_row": 563,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 567,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r930"
+    },
+    {
+      "source_row": 618,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 625,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r465"
+    },
+    {
+      "source_row": 707,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2396"
+    },
+    {
+      "source_row": 713,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r839"
+    },
+    {
+      "source_row": 795,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2461"
+    },
+    {
+      "source_row": 808,
+      "rule": "year_of_birth.min",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 821,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r746"
+    },
+    {
+      "source_row": 849,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2175"
+    },
+    {
+      "source_row": 860,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2132"
+    },
+    {
+      "source_row": 1026,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r727"
+    },
+    {
+      "source_row": 1042,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1079,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r423"
+    },
+    {
+      "source_row": 1133,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r983"
+    },
+    {
+      "source_row": 1189,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r954"
+    },
+    {
+      "source_row": 1238,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1646"
+    },
+    {
+      "source_row": 1286,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1948"
+    },
+    {
+      "source_row": 1299,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2371"
+    },
+    {
+      "source_row": 1349,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1362"
+    },
+    {
+      "source_row": 1371,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1001"
+    },
+    {
+      "source_row": 1377,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r914"
+    },
+    {
+      "source_row": 1419,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r462"
+    },
+    {
+      "source_row": 1441,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r146"
+    },
+    {
+      "source_row": 1475,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1570,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1575"
+    },
+    {
+      "source_row": 1598,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1627,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1215"
+    },
+    {
+      "source_row": 1648,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r918"
+    },
+    {
+      "source_row": 1658,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1704,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r833"
+    },
+    {
+      "source_row": 1762,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1807,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r970"
+    },
+    {
+      "source_row": 1828,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1606"
+    },
+    {
+      "source_row": 1829,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 1869,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r639"
+    },
+    {
+      "source_row": 1909,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1696"
+    },
+    {
+      "source_row": 1946,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1256"
+    },
+    {
+      "source_row": 1949,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1354"
+    },
+    {
+      "source_row": 1961,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 2025,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r67"
+    },
+    {
+      "source_row": 2029,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1618"
+    },
+    {
+      "source_row": 2037,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1702"
+    },
+    {
+      "source_row": 2069,
+      "rule": "email.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 2070,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r2003"
+    },
+    {
+      "source_row": 2082,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1141"
+    },
+    {
+      "source_row": 2086,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r222"
+    },
+    {
+      "source_row": 2136,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1940"
+    },
+    {
+      "source_row": 2158,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r565"
+    },
+    {
+      "source_row": 2160,
+      "rule": "country.allowed",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 2180,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1112"
+    },
+    {
+      "source_row": 2264,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2224"
+    },
+    {
+      "source_row": 2281,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r117"
+    },
+    {
+      "source_row": 2296,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2228"
+    },
+    {
+      "source_row": 2298,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r2193"
+    },
+    {
+      "source_row": 2311,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r2218"
+    },
+    {
+      "source_row": 2336,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2464"
+    },
+    {
+      "source_row": 2372,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2006"
+    },
+    {
+      "source_row": 2384,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1009"
+    },
+    {
+      "source_row": 2403,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r774"
+    },
+    {
+      "source_row": 2426,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r1119"
+    },
+    {
+      "source_row": 2430,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r2135"
+    },
+    {
+      "source_row": 2436,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r1677"
+    },
+    {
+      "source_row": 2453,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r2363"
+    },
+    {
+      "source_row": 2467,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r2475"
+    }
+  ],
+  "clusters": [
+    [
+      "PA-90266",
+      "PB-64888"
+    ],
+    [
+      "PA-65065",
+      "PA-36603"
+    ],
+    [
+      "PA-17803",
+      "PA-88712"
+    ],
+    [
+      "PA-71173",
+      "PB-98701"
+    ],
+    [
+      "PA-67199",
+      "PB-48778"
+    ],
+    [
+      "PA-44819",
+      "PB-44260"
+    ],
+    [
+      "PB-62016",
+      "PA-46830"
+    ],
+    [
+      "PB-34988",
+      "PB-82029"
+    ],
+    [
+      "PB-83476",
+      "PA-57613"
+    ],
+    [
+      "PB-82392",
+      "PB-32045"
+    ],
+    [
+      "PA-81168",
+      "PA-58069"
+    ],
+    [
+      "PB-89654",
+      "PA-20050"
+    ],
+    [
+      "PB-32044",
+      "PB-44688"
+    ],
+    [
+      "PB-68944",
+      "PA-25335"
+    ],
+    [
+      "PA-71103",
+      "PB-90826"
+    ]
+  ],
+  "decoys": [
+    [
+      "PA-40297",
+      "PA-95091"
+    ],
+    [
+      "PB-43326",
+      "PB-65014"
+    ],
+    [
+      "PA-33556",
+      "PA-30664"
+    ],
+    [
+      "PB-10499",
+      "PB-25225"
+    ],
+    [
+      "PB-88256",
+      "PB-11842"
+    ],
+    [
+      "PA-42942",
+      "PA-11685"
+    ],
+    [
+      "PB-72365",
+      "PB-37109"
+    ],
+    [
+      "PA-18765",
+      "PA-30348"
+    ],
+    [
+      "PB-50922",
+      "PB-54836"
+    ],
+    [
+      "PA-33215",
+      "PA-56099"
+    ],
+    [
+      "PB-26249",
+      "PB-68705"
+    ],
+    [
+      "PA-25057",
+      "PA-59632"
+    ],
+    [
+      "PA-72669",
+      "PA-87323"
+    ],
+    [
+      "PB-56389",
+      "PB-78521"
+    ],
+    [
+      "PB-43353",
+      "PB-34520"
+    ],
+    [
+      "PA-53395",
+      "PA-37984"
+    ],
+    [
+      "PA-72619",
+      "PA-44421"
+    ],
+    [
+      "PB-51149",
+      "PB-72506"
+    ],
+    [
+      "PA-43734",
+      "PA-68313"
+    ],
+    [
+      "PA-99343",
+      "PA-49785"
+    ]
+  ],
+  "exit": 0,
+  "exit_strict": 4
+}

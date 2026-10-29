@@ -1,0 +1,215 @@
+{
+  "fixture": "01_survey_export_de.csv",
+  "profile": "01_survey.yaml",
+  "rows": {
+    "read": 1026,
+    "empty": 8,
+    "rejected": 18,
+    "duplicates": 18,
+    "out": 982
+  },
+  "out_columns": 13,
+  "rules": {
+    "age.max": 3,
+    "age.min": 2,
+    "dedupe.exact": 12,
+    "dedupe.key.1": 6,
+    "respondent_id.regex": 2,
+    "respondent_id.required": 1,
+    "start_date.type": 10
+  },
+  "fills": {
+    "household_income": {
+      "filled": 20,
+      "value": 68000.0
+    },
+    "satisfaction": {
+      "filled": 15,
+      "value": 6
+    }
+  },
+  "rejects": [
+    {
+      "source_row": 40,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r902"
+    },
+    {
+      "source_row": 48,
+      "rule": "age.min",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 66,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 76,
+      "rule": "age.min",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 85,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r80"
+    },
+    {
+      "source_row": 118,
+      "rule": "age.max",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 174,
+      "rule": "respondent_id.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 190,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r288"
+    },
+    {
+      "source_row": 220,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r687"
+    },
+    {
+      "source_row": 233,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 304,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r124"
+    },
+    {
+      "source_row": 324,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r181"
+    },
+    {
+      "source_row": 389,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r41"
+    },
+    {
+      "source_row": 407,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r189"
+    },
+    {
+      "source_row": 422,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r610"
+    },
+    {
+      "source_row": 480,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 528,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r783"
+    },
+    {
+      "source_row": 544,
+      "rule": "age.max",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 578,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 583,
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r673"
+    },
+    {
+      "source_row": 632,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r145"
+    },
+    {
+      "source_row": 664,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r157"
+    },
+    {
+      "source_row": 709,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r704"
+    },
+    {
+      "source_row": 711,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 772,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r531"
+    },
+    {
+      "source_row": 790,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 813,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 846,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r225"
+    },
+    {
+      "source_row": 849,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 855,
+      "rule": "respondent_id.regex",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 871,
+      "rule": "age.max",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 940,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 948,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r758"
+    },
+    {
+      "source_row": 952,
+      "rule": "respondent_id.required",
+      "duplicate_of": null
+    },
+    {
+      "source_row": 964,
+      "rule": "dedupe.exact",
+      "duplicate_of": "r453"
+    },
+    {
+      "source_row": 1013,
+      "rule": "start_date.type",
+      "duplicate_of": null
+    }
+  ],
+  "exit": 0,
+  "exit_strict": 4
+}

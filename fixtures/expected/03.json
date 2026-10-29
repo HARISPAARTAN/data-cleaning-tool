@@ -1,0 +1,67 @@
+{
+  "fixture": "03_wave_workbook.xlsx",
+  "profile": "03_waves.yaml",
+  "rows": {
+    "read": 907,
+    "empty": 2,
+    "rejected": 0,
+    "duplicates": 5,
+    "out": 900
+  },
+  "out_columns": 7,
+  "rules": {
+    "dedupe.key.1": 5
+  },
+  "fills": {},
+  "rejects": [
+    {
+      "source_row": 35,
+      "source_sheet": "Wave 2",
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r305 (Wave 2)"
+    },
+    {
+      "source_row": 53,
+      "source_sheet": "Wave 2",
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r306 (Wave 2)"
+    },
+    {
+      "source_row": 175,
+      "source_sheet": "Wave 2",
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r307 (Wave 2)"
+    },
+    {
+      "source_row": 210,
+      "source_sheet": "Wave 2",
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r308 (Wave 2)"
+    },
+    {
+      "source_row": 233,
+      "source_sheet": "Wave 2",
+      "rule": "dedupe.key.1",
+      "duplicate_of": "r309 (Wave 2)"
+    }
+  ],
+  "sheets_read": [
+    "Wave 1",
+    "Wave 2",
+    "Wave 3"
+  ],
+  "sheets_ignored": [
+    "Read me",
+    "Lookup"
+  ],
+  "footer_skipped": 3,
+  "nulled": {
+    "total_score": 3
+  },
+  "nulls": {
+    "mode": 600
+  },
+  "header_row": 4,
+  "exit": 0,
+  "exit_strict": 4
+}

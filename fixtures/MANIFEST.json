@@ -1,0 +1,46 @@
+{
+  "generator": "tools/make_data.py",
+  "seed": 20261029,
+  "files": {
+    "01_survey_export_de.csv": {
+      "sha256": "6ca4696f292c4a49139e0ab854d634fdfdaa2d863b74b2e4a6741efac23a0b79",
+      "bytes": 107237,
+      "committed": true
+    },
+    "02_partner_respondents.csv": {
+      "sha256": "1bf0c6c6c1cc603730619b652f78f1bcd630dc2eccc698c74b3f847be20015bb",
+      "bytes": 225625,
+      "committed": true
+    },
+    "03_wave_workbook.xlsx": {
+      "sha256": "46f646c71183df1105ce0758d8918d31028681331f38090eeb271a756462916d",
+      "bytes": 241448,
+      "committed": true
+    },
+    "04_legacy_partner_latin1.txt": {
+      "sha256": "0134c1e445065ffe1d7ca285fe144ba302890c78850c8c4efac1f90c97ceedc9",
+      "bytes": 41037,
+      "committed": true
+    },
+    "05_panel_large.csv": {
+      "sha256": "d0db83a14a657fedab0ed9e764b7166c8a42397aad06513ebe10a951c996a28c",
+      "bytes": 4522992,
+      "committed": false
+    },
+    "expected/01.json": {
+      "sha256": "8fa6ecff7a3a092d03baef8ab4893f6dc96b8e846b37a660ca8e427ed797d4d1"
+    },
+    "expected/02.json": {
+      "sha256": "9cf6c7776045d98ffd94d56cea033aaedd6ac81c7f9f229f7d546e1d04efcfb7"
+    },
+    "expected/03.json": {
+      "sha256": "5f2e29a8fd55b146b9d566919b40dc568435f5bf8dd3383998ca0ef1f57e113e"
+    },
+    "expected/04.json": {
+      "sha256": "14f3410ae91a480b06b98f57daafcd898b1023a0fca38dc529be308db79e1a30"
+    },
+    "expected/05.json": {
+      "sha256": "eaa1497080b049e7d143bbbfe7763107560d5b55d1d9d908e677ca6036566ff7"
+    }
+  }
+}

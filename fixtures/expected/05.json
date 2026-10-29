@@ -1,0 +1,26 @@
+{
+  "fixture": "05_panel_large.csv",
+  "profile": "05_large.yaml",
+  "rows": {
+    "read": 50000,
+    "empty": 0,
+    "rejected": 250,
+    "duplicates": 1500,
+    "out": 48250
+  },
+  "out_columns": 10,
+  "rules": {
+    "country.allowed": 250,
+    "dedupe.exact": 1000,
+    "dedupe.key.1": 500
+  },
+  "fills": {
+    "points": {
+      "filled": 1000,
+      "value": 0
+    }
+  },
+  "copy_offset": 7001,
+  "exit": 0,
+  "exit_strict": 4
+}
