@@ -15,7 +15,7 @@ from cleandata.core.analyse import analyse_file, analysis_report, choose_guess, 
 from cleandata.core.profile import parse_profile
 from cleandata.errors import InputError
 from cleandata.skeleton.init import build_skeleton
-from support import FIXTURES
+from support import FIXTURES, invoke
 
 
 def guesses(path_name: str) -> dict[str, str | None]:
@@ -167,7 +167,18 @@ def test_plain_english_decimals_vote_for_the_locale(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(
-    ("separator", "escaped"), [("\n", "\\n"), ("\r", "\\r"), ("\u0085", "\\u0085"), (" ", "\\u2028")]
+    ("separator", "escaped"),
+    [
+        ("\n", "\\n"),
+        ("\r", "\\r"),
+        ("\u0085", "\\u0085"),
+        ("\u2028", "\\u2028"),
+        ("\u2029", "\\u2029"),
+        ("\x7f", "\\u007f"),
+        ("\u0090", "\\u0090"),
+        ("\ufffe", "\\ufffe"),
+        ("\uffff", "\\uffff"),
+    ],
 )
 def test_a_file_name_with_a_line_break_stays_inside_the_comment(separator: str, escaped: str) -> None:
     analysis = analyse_file(FIXTURES / "01_survey_export_de.csv")
@@ -177,6 +188,24 @@ def test_a_file_name_with_a_line_break_stays_inside_the_comment(separator: str, 
     assert text.startswith(comment + "\n# Review every column.")
     description = parse_profile(text, "skeleton").description
     assert description == f"Skeleton generated from export{separator}review: yes.csv"
+
+
+@pytest.mark.parametrize("char", ["\x7f", "\x90", chr(0xFFFE), chr(0xFFFF), "\N{LINE SEPARATOR}"])
+def test_init_accepts_characters_that_yaml_refuses_in_cells(tmp_path: Path, char: str) -> None:
+    source = tmp_path / "odd.csv"
+    source.write_bytes(f"name,note\nab{char}c,x{char}y\nplain,fine\n".encode())
+    target = tmp_path / "odd.yaml"
+    result = invoke(["init", str(source), "--out", str(target)])
+    assert result.exit_code == 0, result.stderr
+    text = target.read_text(encoding="utf-8")
+    assert char not in text
+    if char in (
+        "\x7f",
+        chr(0xFFFE),
+        chr(0xFFFF),
+    ):  # the other two are removed or turned into a space before the examples
+        assert f'"ab\\u{ord(char):04x}c"' in text
+    assert parse_profile(text, "skeleton").name == "odd"
 
 
 def test_a_long_file_name_keeps_its_full_length_up_to_the_name_width() -> None:

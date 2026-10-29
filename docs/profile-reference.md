@@ -70,7 +70,7 @@ Title, examples, preview rows, redaction, banner and footer of the reports. See 
 
 ### `input.encoding`
 
-Default `auto`. Any Python codec name (`utf-8`, `utf-8-sig`, `cp1252`, `latin-1`, `utf-16`). With `auto`: a byte order mark decides (UTF-8 BOM gives `utf-8-sig`, a UTF-16 BOM gives `utf-16`); otherwise the first 1 MiB is tried as strict UTF-8 and, if it decodes, the file is read as strict UTF-8 (a later invalid byte is exit 3 with its offset); otherwise charset-normalizer picks the best match, and a Western single-byte result becomes `cp1252` when the sample holds bytes 0x80 to 0x9F and `latin-1` when it does not. A detected encoding is a warning (`read.encoding_detected`) that `--strict` turns into exit 4, so scheduled jobs pin the encoding.
+Default `auto`. Any Python text encoding (`utf-8`, `utf-8-sig`, `cp1252`, `latin-1`, `utf-16`); a name that is unknown, or a bytes codec such as `rot13` or `zlib_codec`, is a profile error (exit 2). With `auto`: a byte order mark decides (UTF-8 BOM gives `utf-8-sig`, a UTF-16 BOM gives `utf-16`); otherwise the first 1 MiB is tried as strict UTF-8 and, if it decodes, the file is read as strict UTF-8 (a later invalid byte is exit 3 with its offset); otherwise charset-normalizer picks the best match, and a Western single-byte result becomes `cp1252` when the sample holds bytes 0x80 to 0x9F and `latin-1` when it does not. A detected encoding is a warning (`read.encoding_detected`) that `--strict` turns into exit 4, so scheduled jobs pin the encoding.
 
 ```yaml
 input:
@@ -514,7 +514,7 @@ Default `flag`. `flag` keeps every row and writes the cluster id (`f0001`, `f000
 
 #### `dedupe.fuzzy.cluster_column`
 
-Default `dup_cluster`. The column written by `flag`, last in the output. It applies only with `action: flag` (`remove` writes no such column, and the report shows `cluster_column: null`), and then it may not be a profile column or the sheet column.
+Default `dup_cluster`. The column written by `flag`, last in the output. It applies only with `action: flag` (`remove` writes no such column, and the report shows `cluster_column: null`), and then it may not be a profile column or the sheet column, and it may not start with `_` (reserved for the tool's own columns such as `_source_row` and the rejects file's `_stage`, `_rule` and `_detail`).
 
 #### `dedupe.fuzzy.max_block_size`
 
@@ -554,7 +554,7 @@ Default `","`. One of `","`, `";"`, `"\t"` (or `tab`) and `"|"`.
 
 #### `output.csv.encoding`
 
-Default `utf-8`. Any Python codec; a value the codec cannot encode stops the run with exit 5, and no partial file is left behind.
+Default `utf-8`. Any Python text encoding (a bytes codec such as `rot13` is a profile error, exit 2); a value the codec cannot encode stops the run with exit 5, and no partial file is left behind.
 
 #### `output.csv.bom`
 
@@ -617,7 +617,7 @@ After the keys are validated, the whole profile is checked, and every problem is
 
 - column names may not be empty or start with `_` (the rejects file's meta columns start with `_`);
 - `dedupe.keys[].columns`, `order_by`, `dedupe.fuzzy.block_on`, `dedupe.fuzzy.fields[].columns`, `output.sort_by` and `report.redact` must name profile columns or the sheet column;
-- with `action: flag`, `dedupe.fuzzy.cluster_column` may not be a profile column or the sheet column (with `remove` it is not checked);
+- with `action: flag`, `dedupe.fuzzy.cluster_column` may not be a profile column or the sheet column, and may not start with `_` (with `remove` it is not checked);
 - `headers.rename` targets must be snake_case and unique;
 - `decimal` and `thousands` must differ, every date and datetime pattern must round-trip a sample date, and no value may be both true and false;
 - `min` and `max` only on integer, number, date and datetime columns, and every bound, allowed value and constant fill must parse as the column's type; `max` may not be below `min`, and datetime bounds must be naive (no time zone);

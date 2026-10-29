@@ -26,16 +26,19 @@ DEFAULT_DATE_FORMATS: Final = ["%Y-%m-%d"]
 DEFAULT_DATETIME_FORMATS: Final = ["%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"]
 COMMENT_WIDTH: Final = 40
 NAME_WIDTH: Final = 120
-# YAML 1.1 loaders end a comment and fold a quoted scalar at these three, which JSON leaves as they are
-YAML_BREAKS: Final = {"\x85": "\\u0085", " ": "\\u2028", " ": "\\u2029"}
+# What PyYAML refuses in any scalar or comment (everything outside its printable set: DEL, the C1 range
+# without U+0085, U+FFFE, U+FFFF, lone surrogates), plus the three characters YAML 1.1 loaders treat as
+# line breaks (U+0085, U+2028, U+2029). All of them are written as \uXXXX escapes, which a double-quoted
+# scalar reads back as the same character.
+YAML_UNSAFE: Final = re.compile(
+    "[^\\t\\n\\r\\x20-\\x7e\\xa0-\\ud7ff\\ue000-\\ufffd\\U00010000-\\U0010ffff]|[\\x85\\u2028\\u2029]"
+)
 
 
 def _json_body(text: str) -> str:
-    """The text as the inside of a JSON string, with quotes, backslashes and every line break escaped."""
+    """The text as the inside of a JSON string, with each character YAML refuses or breaks on escaped."""
     escaped = json.dumps(text, ensure_ascii=False)[1:-1]
-    for char, replacement in YAML_BREAKS.items():
-        escaped = escaped.replace(char, replacement)
-    return escaped
+    return YAML_UNSAFE.sub(lambda match: f"\\u{ord(match.group()):04x}", escaped)
 
 
 def quote(value: object) -> str:

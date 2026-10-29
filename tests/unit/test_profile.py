@@ -11,6 +11,7 @@ import yaml
 from pydantic import ValidationError
 
 import export_schema
+from cleandata.core.encodings import require_text_encoding
 from cleandata.core.profile import Locale, Profile, load_profile, parse_profile, schema
 from cleandata.core.text import TextSettings
 from cleandata.errors import ProfileError
@@ -130,6 +131,18 @@ def test_yaml_11_booleans_must_be_quoted() -> None:
             {"dedupe": {"fuzzy": {"block_on": ["a"], "fields": [{"columns": ["a"]}], "cluster_column": "a"}}},
             "is already a column",
         ),
+        *[
+            (
+                {"a": {"type": "string"}},
+                {
+                    "dedupe": {
+                        "fuzzy": {"block_on": ["a"], "fields": [{"columns": ["a"]}], "cluster_column": name}
+                    }
+                },
+                f"dedupe.fuzzy.cluster_column: '{name}' must not start with '_'",
+            )
+            for name in ("_source_row", "_stage", "_rule", "_detail", "_mine")
+        ],
     ],
 )
 def test_cross_checks(columns: dict[str, object], sections: dict[str, object], message: str) -> None:
@@ -460,3 +473,27 @@ def test_the_schema_exporter_writes_and_flags_drift(
     target.write_text("{}\n", encoding="utf-8")
     assert export_schema.main(["--check"]) == 1
     assert "out of date" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("codec", ["rot13", "zlib_codec"])
+@pytest.mark.parametrize("path", ["input.encoding", "output.csv.encoding"])
+def test_a_bytes_codec_is_refused_in_both_encoding_fields(codec: str, path: str) -> None:
+    section, *inner, field = path.split(".")
+    nested: dict[str, Any] = {field: codec}
+    for key in reversed(inner):
+        nested = {key: nested}
+    with pytest.raises(ProfileError) as caught:
+        parse_dict({"a": {"type": "string"}}, **{section: nested})
+    assert f"{path}: " in str(caught.value)
+    assert f"{codec!r} is not a Python text encoding" in str(caught.value)
+
+
+def test_text_encodings_are_accepted_and_unknown_names_keep_their_message() -> None:
+    for name in ("utf-8", "UTF-8", "latin-1", "cp1252", "utf-16", "utf-8-sig"):
+        assert require_text_encoding(name) == name
+    with pytest.raises(ValueError, match="unknown encoding 'klingon'"):
+        require_text_encoding("klingon")
+    with pytest.raises(ValueError, match="unknown encoding"):
+        require_text_encoding("utf\x008")
+    with pytest.raises(ValueError, match="is not a Python text encoding"):
+        require_text_encoding("hex")

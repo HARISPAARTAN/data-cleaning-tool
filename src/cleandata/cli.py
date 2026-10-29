@@ -7,7 +7,6 @@ piped; logging goes to stderr as ``LEVEL: message``. Every expected failure maps
 
 from __future__ import annotations
 
-import codecs
 import functools
 import hashlib
 import importlib.util
@@ -22,6 +21,7 @@ from typing import Any, TypeVar, cast
 import click
 
 from cleandata import __version__
+from cleandata.core.encodings import require_text_encoding
 from cleandata.errors import EXIT_INTERNAL, EXIT_INTERRUPTED, CleanDataError, UsageError
 
 log = logging.getLogger("cleandata")
@@ -119,10 +119,9 @@ def _encoding(_ctx: click.Context, _param: click.Parameter, value: str | None) -
     if value is None:
         return None
     try:
-        codecs.lookup(value)
-    except LookupError:
-        raise click.BadParameter(f"unknown encoding {value!r}") from None
-    return value
+        return require_text_encoding(value)
+    except ValueError as exc:
+        raise click.BadParameter(str(exc)) from None
 
 
 def _delimiter(_ctx: click.Context, _param: click.Parameter, value: str | None) -> str | None:

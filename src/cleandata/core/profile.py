@@ -20,6 +20,7 @@ import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from cleandata.core.coerce import ParseSettings, coerce_literal
+from cleandata.core.encodings import require_text_encoding
 from cleandata.core.text import TextPlan, TextSettings, fold_key
 from cleandata.errors import ProfileError, UsageError
 
@@ -100,12 +101,7 @@ class InputOptions(_Model):
     @field_validator("encoding")
     @classmethod
     def _known_encoding(cls, value: str) -> str:
-        if value != "auto":
-            try:
-                codecs.lookup(value)
-            except LookupError as exc:
-                raise ValueError(f"unknown encoding {value!r}") from exc
-        return value
+        return value if value == "auto" else require_text_encoding(value)
 
     @field_validator("delimiter", mode="before")
     @classmethod
@@ -213,11 +209,7 @@ class CsvOutput(_Model):
     @field_validator("encoding")
     @classmethod
     def _known_encoding(cls, value: str) -> str:
-        try:
-            codecs.lookup(value)
-        except LookupError as exc:
-            raise ValueError(f"unknown encoding {value!r}") from exc
-        return value
+        return require_text_encoding(value)
 
 
 class XlsxOutput(_Model):
@@ -317,6 +309,11 @@ class Profile(_Model):
                     need(f"dedupe.fuzzy.fields.{index}.columns", name)
             if fuzzy.action == "flag" and fuzzy.cluster_column in known:
                 problems.append(f"dedupe.fuzzy.cluster_column: {fuzzy.cluster_column!r} is already a column")
+            if fuzzy.action == "flag" and fuzzy.cluster_column.startswith("_"):
+                problems.append(
+                    f"dedupe.fuzzy.cluster_column: {fuzzy.cluster_column!r} must not start with '_' "
+                    "(names starting with '_' are reserved for the tool's internal and rejects-file columns)"
+                )
         for name in self.output.sort_by:
             need("output.sort_by", name)
         for name in self.report.redact:

@@ -416,6 +416,22 @@ def test_the_encoding_option_checks_the_codec() -> None:
     assert "encoding   utf-8-sig (given)" in good.stdout
 
 
+@pytest.mark.parametrize("codec", ["rot13", "zlib_codec"])
+def test_a_non_text_codec_is_a_usage_error_everywhere(tmp_path: Path, codec: str) -> None:
+    option = invoke(["profile", SURVEY, "--encoding", codec])
+    assert option.exit_code == 2
+    assert f"{codec!r} is not a Python text encoding" in option.stderr
+    changes = (
+        lambda d: d["input"].update(encoding=codec),
+        lambda d: d["output"]["csv"].update(encoding=codec),
+    )
+    for number, change in enumerate(changes):
+        result = clean(tmp_path, profile=changed_profile(tmp_path, "01_survey.yaml", change))
+        assert result.exit_code == 2, (number, result.stderr)
+        assert "not a Python text encoding" in result.stderr
+        assert "internal error" not in result.stderr
+
+
 def test_the_delimiter_option_takes_a_word_or_the_character() -> None:
     bad = invoke(["profile", SURVEY, "--delimiter", "::"])
     assert bad.exit_code == 2
