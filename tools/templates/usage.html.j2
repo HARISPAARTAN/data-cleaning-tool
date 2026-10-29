@@ -70,7 +70,7 @@ main>section{display:grid;gap:var(--space-4);min-width:0}
 
 <section id="demo" aria-labelledby="demo-title">
   <h2 id="demo-title">Demo run on the survey fixture</h2>
-  <p class="prose">Four commands on <code>fixtures/01_survey_export_de.csv</code>, a German survey export with 1,026 records, recorded with the release build. Standard output carries results only; logs and the explain text go to standard error.</p>
+  <p class="prose">Four commands on <code>fixtures/01_survey_export_de.csv</code>, a German survey export with {{ records_read }} records, recorded with version {{ version }}. Standard output carries results only; logs and the explain text go to standard error.</p>
   <div class="pf-grid" style="--min:140px">
   {% for label, value in counts %}
     <div class="pf-kpi"><span class="pf-kpi__label pf-label">{{ label }}</span><span class="pf-kpi__value">{{ value }}</span></div>

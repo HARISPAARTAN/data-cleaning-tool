@@ -165,7 +165,7 @@ INFO: missing: 35 cells filled, 0 rows dropped
 INFO: write: 982 rows written to cleaned.csv
 ```
 
-Reports and logs name input files by base name, never by full path. `--explain` adds lines such as the following; they go to stderr with the same `INFO: ` prefix as the log lines above, and continuation lines are indented under the block name (the examples are shortened here):
+The reports and the log lines name input files by base name, never by full path; an error line prints a path as it was given on the command line. `--explain` adds lines such as the following; they go to stderr with the same `INFO: ` prefix as the log lines above, and continuation lines are indented under the block name (the examples are shortened here):
 
 ```text
 INFO: [types]    household_income number(decimal=",", thousands=".")  parsed 998 · null 20 · invalid 0

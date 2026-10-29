@@ -31,7 +31,7 @@ Die [Nutzungsseite](https://harispaartan.github.io/data-cleaning-tool/) zeigt ei
 - **Liest Dateien jedes Mal gleich:** Kodierung (BOM, striktes UTF-8, dann Erkennung mit Warnung) und Trennzeichen werden erkannt, mehrzeilige Felder in Anführungszeichen, Kopfzeilen unter einem Titelblock, Fußzeilen, mehrere Excel-Blätter untereinander mit Blattspalte, zu kurze und fehlerhafte Datensätze.
 - **Spaltennamen:** snake_case mit Umlauten, Währungszeichen und camelCase (`Haushaltseinkommen (€)` wird zu `haushaltseinkommen_eur`), doppelte Namen nummeriert, danach eine Umbenennungstabelle.
 - **Text:** Unicode-Form, Steuer- und Nullbreitenzeichen, geschützte Leerzeichen, Leerraum, Platzhalter wie `k.A.`, Groß- und Kleinschreibung und Wertetabellen (`Deutschland`, `de` und `DE` werden zu `DE`).
-- **Typen mit Gebietsschema:** deutsche und englische Zahlen (`45.000,00`, `1,250`), Datumswerte in mehreren Mustern, Zeitstempel und Wahrheitswerte; ein Wert, der sich nicht lesen lässt, wird abgelehnt und nie geraten.
+- **Typen mit Gebietsschema:** deutsche und englische Zahlen (`45.000,00`, `1,250`), Datumswerte in mehreren Mustern, Zeitstempel und Wahrheitswerte; ein Wert, der sich nicht lesen lässt, wird abgelehnt oder, wenn das Profil es vorsieht, auf null gesetzt und nie geraten.
 - **Prüfregeln:** Pflichtfeld, Minimum, Maximum, regulärer Ausdruck auf den ganzen Wert und erlaubte Werte; jede fehlerhafte Zeile kommt mit allen Fehlern in die Ausschussdatei.
 - **Dubletten:** exakt (nach der Normalisierung), nach Schlüssel mit „erste“ oder „letzte behalten“ und Sortierspalte, und unscharf innerhalb von Blöcken (Extra `fuzzy`, markiert Gruppen standardmäßig zur Prüfung).
 - **Fehlende Werte je Spalte:** behalten, verwerfen, Konstante, Median (unterer Median bei ganzen Zahlen) oder Vorwärtsfüllen.
@@ -143,4 +143,4 @@ Die ursprüngliche Arbeit war ein Bereinigungsskript je Datei der Auftraggebersc
 
 ## Lizenz und Hinweis zu den Daten
 
-MIT, siehe [LICENSE](LICENSE). Jedes Fixture erzeugt [tools/make_data.py](tools/make_data.py) mit festem Startwert: Vor- und Nachnamen werden zufällig aus kurzen Listen gängiger Namen je Land kombiniert ([tools/name_pool.py](tools/name_pool.py)), E-Mail-Adressen nutzen die reservierte Top-Level-Domain `.example`, und Northgate Panel Research ist ein erfundenes Unternehmen. Keine echte Person, kein echtes Unternehmen und keine echte Adresse kommt in diesem Repository vor.
+MIT, siehe [LICENSE](LICENSE). Jedes Fixture erzeugt [tools/make_data.py](tools/make_data.py) mit festem Startwert: Vor- und Nachnamen werden zufällig aus kurzen Listen gängiger Namen je Land kombiniert ([tools/name_pool.py](tools/name_pool.py)), E-Mail-Adressen nutzen die reservierte Top-Level-Domain `.example`, und Northgate Panel Research ist ein erfundenes Unternehmen. Abgesehen von der Urheberschaft kommt keine echte Person, kein echtes Unternehmen und keine echte Adresse in diesem Repository vor.

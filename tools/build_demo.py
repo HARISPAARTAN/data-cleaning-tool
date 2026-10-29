@@ -222,14 +222,14 @@ def render(steps: list[Step], names: list[str], records: list[Record], files: di
         keep_trailing_newline=True,
         finalize=html_text,
     )
-    summary = steps[-1].stdout.strip()
-    counts = [part.rsplit(" ", 1) for part in summary.split(" · ")]
+    counts = [part.rsplit(" ", 1) for part in steps[-1].stdout.strip().split(" · ")]
+    records_read = f"{int(dict(counts)['read']):,}"
     return environment.get_template(TEMPLATE.name).render(
         version=cleandata.__version__,
         repo=REPO,
         steps=steps,
-        summary=summary,
         counts=counts,
+        records_read=records_read,
         names=names,
         records=records,
         files=[(name, size_of(path)) for name, path in files.items()],
