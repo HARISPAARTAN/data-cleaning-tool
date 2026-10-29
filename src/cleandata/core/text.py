@@ -44,6 +44,7 @@ SPECIAL_WHITESPACE: Final = re.compile(
 
 UnicodeForm = Literal["NFC", "NFD", "NFKC", "NFKD", "none"]
 
+
 @dataclass(frozen=True)
 class TextSettings:
     unicode: UnicodeForm = "NFC"
