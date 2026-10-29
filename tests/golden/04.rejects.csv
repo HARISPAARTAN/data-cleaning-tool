@@ -1,0 +1,3 @@
+_source_row,_stage,_rule,_detail,partner_ref,name,city,country,amount_gbp,paid_on,active,note
+198,read,read.malformed,PB-56441	Grainne Gallagher	Kilkenny	Ireland	£12.00	01/03/2026	Y	Paid twice		duplicate payment	see letter,,,,,,,,
+282,read,read.malformed,PB-24848	Orla Quinn	Sligo	Ireland	£12.00	01/03/2026	Y	Paid twice		duplicate payment	see letter,,,,,,,,

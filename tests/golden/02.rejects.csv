@@ -1,0 +1,83 @@
+_source_row,_stage,_rule,_detail,partner_id,panelist_ref,first_name,last_name,email,country,year_of_birth,points,opt_in,joined
+112,dedupe,dedupe.key.1,duplicate of r571,PA,PA-28080,Siobhan,Murphy,Siobhan.murphy465@inbox.example,IE,1990,"12,167",1,2023-06-06
+133,validate,year_of_birth.max,year_of_birth.max: 2020 > 2010,PB,PB-18728,Levi,Peters,levi.peters22@mail.example,The Netherlands,2020,"19,878",TRUE,2021-07-03
+170,dedupe,dedupe.key.1,duplicate of r390,PA,PA-15221,Paul,Richter,  PAUL.RICHTER156@INBOX.EXAMPLE ,Deutschland,1967,"23,386",no,2026-03-08
+197,validate,country.allowed,"country.allowed: ""Denmark"" is not an allowed value",PB,PB-79975,Lotte,Visser,lotte.visser858@mail.example,Denmark,1970,"14,653",1,2023-02-15
+204,validate,year_of_birth.min,year_of_birth.min: 1910 < 1925,PB,PB-74221,Lily,Smith,lily.smith417@inbox.example,Great Britain,1910,"22,238",TRUE,22/08/2021
+226,validate,year_of_birth.max,year_of_birth.max: 2014 > 2010,PB,PB-54220,Lily,Johnson,lily.johnson126@inbox.example,United Kingdom,2014,"21,205",yes,02/09/2023
+254,dedupe,dedupe.key.1,duplicate of r2208,PA,PA-35322,Levi,de Boer,  LEVI.DEBOER9@MAIL.EXAMPLE ,Holland,2000,"4,878",TRUE,27/12/2026
+280,validate,country.allowed,"country.allowed: ""France"" is not an allowed value",PB,PB-35192,Oliver,Davies,oliver.davies304@mail.example,France,1991,"1,161",N,2023-03-13
+306,dedupe,dedupe.exact,duplicate of r84,PB,PB-80081,Siobhan,Kennedy,siobhan.kennedy935@mail.example,Éire,1956,"8,331",TRUE,27/01/2022
+326,dedupe,dedupe.key.1,duplicate of r2113,PB,PB-47398,Darragh,O'Brien,Darragh.obrien911@inbox.example,Éire,1980,"6,098",1,13/08/2025
+392,dedupe,dedupe.exact,duplicate of r185,PA,PA-19277,Padraig,Kennedy,padraig.kennedy957@mail.example,Ireland,1972,"22,580",TRUE,2019-05-10
+399,dedupe,dedupe.key.1,duplicate of r36,PA,PA-74103,Bram,de Boer,Bram.deboer925@mail.example,Holland,1958,"15,218",no,2023-09-30
+406,dedupe,dedupe.key.1,duplicate of r984,PA,PA-42894,Julia,Janssen,julia.janssen915@mail.example,NL,1996,"9,859",0,15/10/2026
+458,dedupe,dedupe.key.1,duplicate of r2126,PA,PA-38536,Ruben,van Dijk,Ruben.vandijk449@mail.example,Netherlands,1961,"5,747",no,2023-12-21
+476,dedupe,dedupe.key.1,duplicate of r1211,PA,PA-64181,Charlie,Ward,  CHARLIE.WARD213@MAIL.EXAMPLE ,GB,1989,"9,756",TRUE,2021-09-28
+484,dedupe,dedupe.key.1,duplicate of r301,PB,PB-37526,Mila,Peters,mila.peters793@post.example,The Netherlands,1992,"11,485",1,18/03/2021
+511,dedupe,dedupe.exact,duplicate of r344,PB,PB-26125,Brigitte,Koch,  BRIGITTE.KOCH647@INBOX.EXAMPLE ,Deutschland,2001,"19,191",yes,07/04/2025
+563,validate,email.regex,"email.regex: ""j***@mail"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PA,PA-78596,Jörg,Schulz,jorg.schulz@mail,Deutschland,1975,"22,281",Y,14/09/2022
+567,dedupe,dedupe.key.1,duplicate of r930,PA,PA-29347,Arthur,Clarke,Arthur.clarke664@post.example,Great Britain,1995,"1,313",1,22/02/2028
+618,validate,country.allowed,"country.allowed: ""Iceland"" is not an allowed value",PA,PA-23664,Amelia,Walker,amelia.walker410@mail.example,Iceland,1996,"17,707",TRUE,2025-11-29
+625,dedupe,dedupe.key.1,duplicate of r465,PB,PB-15696,Emily,Robinson,emily.robinson653@mail.example,United Kingdom,1989,"19,147",0,2026-02-20
+707,dedupe,dedupe.key.1,duplicate of r2396,PA,PA-56727,Orla,Gallagher,orla.gallagher74@mail.example,Ireland,1977,"4,340",Y,28/01/2023
+713,dedupe,dedupe.key.1,duplicate of r839,PA,PA-85336,Jörg,Schäfer,Jorg.schafer368@mail.example,DE,1952,"3,607",Y,2021-03-03
+795,dedupe,dedupe.key.1,duplicate of r2461,PB,PB-32749,Bram,Smit,  BRAM.SMIT425@POST.EXAMPLE ,NL,1962,"11,881",Y,2022-02-02
+808,validate,year_of_birth.min,year_of_birth.min: 1899 < 1925,PA,PA-29099,Ute,Fischer,ute.fischer381@inbox.example,Germany,1899,"20,191",TRUE,2024-05-27
+821,dedupe,dedupe.key.1,duplicate of r746,PA,PA-40448,Noah,Jackson,Noah.jackson579@post.example,Great Britain,1990,"3,797",yes,12/07/2023
+849,dedupe,dedupe.key.1,duplicate of r2175,PB,PB-13491,Noah,Turner,noah.turner516@mail.example,UK,1996,"9,193",1,2021-12-04
+860,dedupe,dedupe.key.1,duplicate of r2132,PA,PA-51322,Hannah,Neumann,hannah.neumann432@inbox.example,DE,1951,"6,757",0,2022-06-14
+1026,dedupe,dedupe.exact,duplicate of r727,PB,PB-70902,Sean,Murray,  SEAN.MURRAY813@POST.EXAMPLE ,Éire,1944,"24,278",N,2021-06-17
+1042,validate,email.regex,"email.regex: ""a***@@mail.example"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PB,PB-47073,Anouk,Bos,anouk.bos@@mail.example,Holland,1975,"24,755",no,2022-02-04
+1079,dedupe,dedupe.key.1,duplicate of r423,PB,PB-97000,Renate,Zimmermann,Renate.zimmermann460@inbox.example,Germany,1987,"6,100",N,25/03/2022
+1133,dedupe,dedupe.exact,duplicate of r983,PA,PA-76650,Dieter,Müller,dieter.muller298@post.example,Deutschland,1963,"8,039",1,2023-08-08
+1189,dedupe,dedupe.key.1,duplicate of r954,PA,PA-29229,Fleur,Mulder,Fleur.mulder635@post.example,Holland,1957,"12,326",no,2025-05-16
+1238,dedupe,dedupe.key.1,duplicate of r1646,PA,PA-60802,Darragh,McCarthy,darragh.mccarthy417@inbox.example,Éire,1975,"23,762",1,2023-11-22
+1286,dedupe,dedupe.key.1,duplicate of r1948,PB,PB-11888,James,Smith,james.smith452@post.example,GB,1944,"6,557",0,2021-09-17
+1299,dedupe,dedupe.key.1,duplicate of r2371,PA,PA-84657,Charlie,Johnson,Charlie.johnson644@inbox.example,UK,1970,"7,592",Y,22/03/2022
+1349,dedupe,dedupe.key.1,duplicate of r1362,PB,PB-21251,Arthur,Jackson,arthur.jackson307@post.example,Great Britain,1964,"19,274",no,2024-06-15
+1371,dedupe,dedupe.exact,duplicate of r1001,PA,PA-72796,Henry,Hughes,henry.hughes289@inbox.example,UK,1956,"4,444",no,2024-05-17
+1377,dedupe,dedupe.exact,duplicate of r914,PB,PB-11318,Amelia,Walker,amelia.walker558@mail.example,United Kingdom,1949,"5,689",Y,2022-02-15
+1419,dedupe,dedupe.key.1,duplicate of r462,PA,PA-87415,Jonas,Klein,Jonas.klein423@mail.example,Germany,1982,"18,235",N,28/09/2022
+1441,dedupe,dedupe.exact,duplicate of r146,PA,PA-65475,Sara,Meijer,sara.meijer112@mail.example,The Netherlands,1955,"6,023",TRUE,13/06/2022
+1475,validate,country.allowed,"country.allowed: ""Portugal"" is not an allowed value",PA,PA-30015,Käthe,Schneider,kathe.schneider891@inbox.example,Portugal,1959,"16,646",1,02/02/2024
+1570,dedupe,dedupe.key.1,duplicate of r1575,PB,PB-54294,Brigitte,Bauer,  BRIGITTE.BAUER179@INBOX.EXAMPLE ,Germany,1952,"7,553",no,2026-02-10
+1598,validate,email.regex,"email.regex: ""@***"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PA,PA-18429,Padraig,O'Connor,@post.example,Éire,1958,"11,923",yes,2020-03-02
+1627,dedupe,dedupe.exact,duplicate of r1215,PA,PA-15418,Lily,Walker,lily.walker699@post.example,UK,1969,"4,848",N,31/03/2024
+1648,dedupe,dedupe.exact,duplicate of r918,PB,PB-45898,Grainne,Quinn,grainne.quinn765@post.example,Ireland,1975,"24,663",TRUE,11/07/2024
+1658,validate,email.regex,"email.regex: ""s***"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PB,PB-16209,Sophie,Green,sophie.green.inbox.example,GB,1951,"4,780",0,2022-04-06
+1704,dedupe,dedupe.key.1,duplicate of r833,PB,PB-17938,Jack,Brown,  JACK.BROWN110@POST.EXAMPLE ,GB,1984,"9,339",Y,12/04/2021
+1762,validate,email.regex,"email.regex: ""m***@post.example"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PB,PB-21563,Mila,de Jong,mila.dejong x@post.example,Holland,1972,"4,871",no,02/04/2022
+1807,dedupe,dedupe.key.1,duplicate of r970,PB,PB-31450,Tess,Vos,Tess.vos102@post.example,Netherlands,1943,"10,551",Y,2020-10-16
+1828,dedupe,dedupe.exact,duplicate of r1606,PA,PA-49610,Charlie,Ward,Charlie.ward714@mail.example,Great Britain,1966,"11,846",Y,2019-11-09
+1829,validate,country.allowed,"country.allowed: ""Austria"" is not an allowed value",PB,PB-22350,Lea,Müller,lea.muller357@inbox.example,Austria,1968,"19,366",yes,2021-01-01
+1869,dedupe,dedupe.key.1,duplicate of r639,PA,PA-19980,Tess,Peters,Tess.peters99@inbox.example,Netherlands,1979,"7,574",TRUE,2027-12-01
+1909,dedupe,dedupe.exact,duplicate of r1696,PB,PB-83378,Daniel,Davies,daniel.davies193@mail.example,United Kingdom,1987,"19,831",0,14/07/2021
+1946,dedupe,dedupe.exact,duplicate of r1256,PA,PA-86497,Mia,Brown,Mia.brown225@post.example,Great Britain,1962,"2,911",N,2026-08-23
+1949,dedupe,dedupe.exact,duplicate of r1354,PB,PB-61224,Emily,Jones,emily.jones749@inbox.example,UK,1986,"12,481",yes,2024-11-17
+1961,validate,country.allowed,"country.allowed: ""Spain"" is not an allowed value",PB,PB-13853,William,Hughes,william.hughes692@post.example,Spain,1952,"15,686",1,2024-01-16
+2025,dedupe,dedupe.key.1,duplicate of r67,PB,PB-78635,Isla,Turner,  ISLA.TURNER145@POST.EXAMPLE ,Great Britain,1995,"11,920",0,07/03/2028
+2029,dedupe,dedupe.exact,duplicate of r1618,PA,PA-64597,Thomas,Smith,Thomas.smith445@mail.example,United Kingdom,2004,"17,764",0,22/07/2022
+2037,dedupe,dedupe.exact,duplicate of r1702,PA,PA-65971,Brigitte,Bauer,Brigitte.bauer99@inbox.example,DE,2005,"12,282",yes,2020-09-30
+2069,validate,email.regex,"email.regex: ""g***@mail.e"" does not match ^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$",PB,PB-71943,George,Johnson,george.johnson@mail.e,United Kingdom,1950,"6,371",Y,2019-04-13
+2070,dedupe,dedupe.exact,duplicate of r2003,PB,PB-92796,Laura,Lange,Laura.lange688@post.example,DE,1983,"23,337",N,29/12/2020
+2082,dedupe,dedupe.key.1,duplicate of r1141,PB,PB-98367,Fleur,Meijer,Fleur.meijer244@mail.example,Netherlands,1996,"17,645",Y,2022-05-22
+2086,dedupe,dedupe.key.1,duplicate of r222,PB,PB-15497,Hannah,Meyer,  HANNAH.MEYER933@MAIL.EXAMPLE ,DE,1991,"6,191",TRUE,2020-07-31
+2136,dedupe,dedupe.exact,duplicate of r1940,PB,PB-68787,Roisin,Murphy,  ROISIN.MURPHY403@MAIL.EXAMPLE ,Ireland,2005,"6,438",N,2019-02-16
+2158,dedupe,dedupe.key.1,duplicate of r565,PA,PA-42227,Felix,Schäfer,  FELIX.SCHAFER749@MAIL.EXAMPLE ,Deutschland,1972,"17,696",yes,2022-05-23
+2160,validate,country.allowed,"country.allowed: ""Belgium"" is not an allowed value",PB,PB-93439,Lily,Walker,lily.walker151@post.example,Belgium,1986,"21,122",1,2024-02-12
+2180,dedupe,dedupe.exact,duplicate of r1112,PA,PA-41619,Jürgen,Koch,jurgen.koch66@mail.example,DE,1999,"1,324",Y,2020-07-30
+2264,dedupe,dedupe.key.1,duplicate of r2224,PB,PB-94226,Mila,Meijer,mila.meijer489@mail.example,Holland,1973,"2,262",TRUE,2026-01-18
+2281,dedupe,dedupe.exact,duplicate of r117,PB,PB-90829,Felix,Klein,  FELIX.KLEIN388@MAIL.EXAMPLE ,DE,1973,"18,670",1,2023-06-30
+2296,dedupe,dedupe.key.1,duplicate of r2228,PB,PB-25216,Jörg,Müller,Jorg.muller907@inbox.example,DE,1993,"7,541",0,2025-10-31
+2298,dedupe,dedupe.exact,duplicate of r2193,PB,PB-98314,Bram,Hendriks,bram.hendriks936@inbox.example,The Netherlands,1975,"5,547",no,13/03/2025
+2311,dedupe,dedupe.exact,duplicate of r2218,PB,PB-71739,Sara,Janssen,sara.janssen342@post.example,Holland,1956,"10,357",1,11/06/2025
+2336,dedupe,dedupe.key.1,duplicate of r2464,PA,PA-45306,Ruben,de Vries,ruben.devries570@post.example,Netherlands,1940,"6,492",1,05/11/2024
+2372,dedupe,dedupe.key.1,duplicate of r2006,PB,PB-59887,Julia,Bakker,julia.bakker927@inbox.example,Holland,1968,"10,009",no,27/06/2025
+2384,dedupe,dedupe.key.1,duplicate of r1009,PB,PB-62439,Jörg,Müller,Jorg.muller662@mail.example,Germany,1977,"5,040",0,2027-07-14
+2403,dedupe,dedupe.key.1,duplicate of r774,PA,PA-36819,Amelia,Clarke,amelia.clarke547@inbox.example,GB,1953,"6,582",Y,2023-11-15
+2426,dedupe,dedupe.exact,duplicate of r1119,PB,PB-84377,Amelia,White,  AMELIA.WHITE431@INBOX.EXAMPLE ,UK,1947,"9,817",TRUE,06/09/2021
+2430,dedupe,dedupe.exact,duplicate of r2135,PA,PA-23487,Conor,McLoughlin,  CONOR.MCLOUGHLIN320@INBOX.EXAMPLE ,Éire,1974,"16,194",0,2024-11-26
+2436,dedupe,dedupe.key.1,duplicate of r1677,PB,PB-23852,Maximilian,Krüger,  MAXIMILIAN.KRUGER733@MAIL.EXAMPLE ,Germany,1985,"23,972",1,2025-08-31
+2453,dedupe,dedupe.exact,duplicate of r2363,PA,PA-68018,Lukas,Schneider,  LUKAS.SCHNEIDER779@POST.EXAMPLE ,Deutschland,1964,"22,415",Y,2019-12-20
+2467,dedupe,dedupe.key.1,duplicate of r2475,PA,PA-91643,Thomas,Hall,  THOMAS.HALL305@INBOX.EXAMPLE ,UK,1973,"14,774",N,2026-06-17

@@ -1,0 +1,6 @@
+_source_row,_source_sheet,_stage,_rule,_detail,respondent_id,interview_date,region,score,total_score,mode,source_sheet
+35,Wave 2,dedupe,dedupe.key.1,duplicate of r305 (Wave 2),NG-502731,2026-05-09T00:00:00,South West,8,80,,Wave 2
+53,Wave 2,dedupe,dedupe.key.1,duplicate of r306 (Wave 2),NG-859052,2026-05-07T00:00:00,South West,6,60,,Wave 2
+175,Wave 2,dedupe,dedupe.key.1,duplicate of r307 (Wave 2),NG-516245,2026-06-09T00:00:00,North East,7,70,,Wave 2
+210,Wave 2,dedupe,dedupe.key.1,duplicate of r308 (Wave 2),NG-725775,29.05.2026,Northern Ireland,6,60,,Wave 2
+233,Wave 2,dedupe,dedupe.key.1,duplicate of r309 (Wave 2),NG-776961,2026-06-02T00:00:00,East Midlands,1,10,,Wave 2
