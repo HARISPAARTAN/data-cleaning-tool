@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 import unicodedata
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Final
+from typing import TYPE_CHECKING, Final, Literal
 
 import pandas as pd
 
@@ -42,9 +42,11 @@ SPECIAL_WHITESPACE: Final = re.compile(
 )
 
 
+UnicodeForm = Literal["NFC", "NFD", "NFKC", "NFKD", "none"]
+
 @dataclass(frozen=True)
 class TextSettings:
-    unicode: str = "NFC"
+    unicode: UnicodeForm = "NFC"
     trim: bool = True
     collapse_whitespace: bool = True
     remove_control: bool = True
