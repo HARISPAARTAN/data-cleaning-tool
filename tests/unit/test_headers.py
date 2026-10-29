@@ -38,11 +38,17 @@ CASES = [
     ("\N{LATIN SMALL LIGATURE FI}le", "file"),
     ("NPS (0\N{EN DASH}10)", "nps_0_10"),
     ("kommentar_2", "kommentar_2"),
+    ("MÄRZ", "maerz"),
+    ("GRÖSSE", "groesse"),
+    ("ÜBER", "ueber"),
+    ("ÖL", "oel"),
+    ("ÆON", "aeon"),
+    ("ÄRGER", "aerger"),
 ]
 
 
-def test_thirty_cases() -> None:
-    assert len(CASES) == 30
+def test_thirty_six_cases() -> None:
+    assert len(CASES) == 36
 
 
 @pytest.mark.parametrize(("raw", "expected"), CASES)

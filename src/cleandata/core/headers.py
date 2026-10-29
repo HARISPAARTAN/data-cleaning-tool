@@ -1,7 +1,8 @@
 """Stage 2, structure: empty records, header normalisation, rename and drop, the sheet column.
 
-``snake_case`` applies NFKC; ``ä`` ae, ``ö`` oe, ``ü`` ue, ``ß`` ss (plus a few letters NFKD cannot
-split, such as ``ø``), other accents stripped; ``€`` eur, ``£`` gbp, ``$`` usd, ``%`` pct, ``#`` no,
+``snake_case`` applies NFKC; ``ä`` ae, ``ö`` oe, ``ü`` ue, ``ß`` ss (a capital is ``Ae`` before a lower-case
+letter and ``AE`` otherwise, so ``MÄRZ`` is ``maerz`` and ``Ärger`` is ``aerger``; plus a few letters NFKD
+cannot split, such as ``ø``), other accents stripped; ``€`` eur, ``£`` gbp, ``$`` usd, ``%`` pct, ``#`` no,
 ``&`` and; camelCase and acronym boundaries split; lower case; runs of other characters become ``_``,
 trimmed; empty becomes ``column_<position>``; a leading digit gets ``c_``; repeats get ``_2``, ``_3``
 left to right, skipping taken names. It is idempotent on its own output.
@@ -37,23 +38,25 @@ LETTERS: Final = str.maketrans(
         "ä": "ae",
         "ö": "oe",
         "ü": "ue",
-        "Ä": "Ae",
-        "Ö": "Oe",
-        "Ü": "Ue",
         "ß": "ss",
-        "\N{LATIN CAPITAL LETTER SHARP S}": "SS",
         "ø": "o",
         "Ø": "O",
         "æ": "ae",
-        "Æ": "Ae",
         "œ": "oe",
-        "Œ": "Oe",
         "ł": "l",
         "Ł": "L",
         "đ": "d",
         "Đ": "D",
     }
 )
+DIGRAPHS: Final = {
+    "Ä": "Ae",
+    "Ö": "Oe",
+    "Ü": "Ue",
+    "Æ": "Ae",
+    "Œ": "Oe",
+    "\N{LATIN CAPITAL LETTER SHARP S}": "Ss",
+}
 SYMBOLS: Final = (
     ("€", " eur "),
     ("£", " gbp "),
@@ -65,11 +68,19 @@ SYMBOLS: Final = (
 ACRONYM: Final = re.compile(r"([A-Z]+)([A-Z][a-z])")
 CAMEL: Final = re.compile(r"([a-z0-9])([A-Z])")
 OTHER: Final = re.compile(r"[^a-z0-9]+")
+CAPITAL_DIGRAPH: Final = re.compile("[" + "".join(DIGRAPHS) + "]")
+
+
+def capital_digraph(match: re.Match[str]) -> str:
+    """``Ae`` before a lower-case letter (``Ärger``), else ``AE`` (``MÄRZ``): one word to the camel split."""
+    word = DIGRAPHS[match[0]]
+    after = match.string[match.end() : match.end() + 1]
+    return word if after.islower() else word.upper()
 
 
 def snake_case(raw: str, position: int) -> str:
     """Normalise one header; ``position`` is 1-based and names an empty header."""
-    text = unicodedata.normalize("NFKC", raw).translate(LETTERS)
+    text = CAPITAL_DIGRAPH.sub(capital_digraph, unicodedata.normalize("NFKC", raw)).translate(LETTERS)
     for symbol, word in SYMBOLS:
         text = text.replace(symbol, word)
     text = "".join(ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch))
