@@ -12,7 +12,7 @@ Deutsche Fassung: [README.de.md](README.de.md)
 
 - Version 0.1.0. Commands `profile`, `init` and `clean`; input CSV, TSV, TXT and XLSX; output CSV, XLSX and Parquet (extra `parquet`); fuzzy de-duplication as the extra `fuzzy`.
 - Verified locally on Windows 11 with Python 3.13 and the locked packages: the whole test suite passes (unit, CLI, fixtures, property and docs tests), the five fixtures give exactly the outcomes in [docs/data-model.md](docs/data-model.md), and chunked and in-memory runs of the 50,000-record fixture write byte-identical files.
-- CI on Ubuntu 24.04 and Windows Server 2025 with Python 3.11, 3.12 and 3.13 has not run yet; this line changes when it has.
+- CI on GitHub passed before the release: the tests on Ubuntu 24.04 and Windows Server 2025 with Python 3.11, 3.12 and 3.13, the run without optional extras, lint and type checks, the demo rebuild, the repository checks and the build; the usage page and the demo report are live on GitHub Pages.
 
 ## Client brief
 

@@ -12,7 +12,7 @@ English version: [README.md](README.md)
 
 - Version 0.1.0. Befehle `profile`, `init` und `clean`; Eingabe CSV, TSV, TXT und XLSX; Ausgabe CSV, XLSX und Parquet (Extra `parquet`); unscharfe Dublettensuche als Extra `fuzzy`.
 - Lokal geprüft unter Windows 11 mit Python 3.13 und den gesperrten Paketversionen: Die gesamte Testsuite läuft durch (Unit-, CLI-, Fixture-, Property- und Doku-Tests), die fünf Fixtures liefern genau die Ergebnisse aus [docs/data-model.md](docs/data-model.md), und Läufe des Fixtures mit 50.000 Datensätzen in Blöcken und im Speicher schreiben byte-gleiche Dateien.
-- CI unter Ubuntu 24.04 und Windows Server 2025 mit Python 3.11, 3.12 und 3.13 ist noch nicht gelaufen; diese Zeile ändert sich, sobald sie gelaufen ist.
+- CI auf GitHub ist vor dem Release durchgelaufen: die Tests unter Ubuntu 24.04 und Windows Server 2025 mit Python 3.11, 3.12 und 3.13, der Lauf ohne optionale Extras, Lint und Typprüfung, der Neubau der Demo, die Repository-Prüfungen und der Build; Nutzungsseite und Demo-Bericht sind auf GitHub Pages online.
 
 ## Auftrag
 

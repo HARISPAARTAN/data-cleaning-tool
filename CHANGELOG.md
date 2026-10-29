@@ -2,7 +2,7 @@
 
 All notable changes to this project are listed here. Versions follow semantic versioning.
 
-## v0.1.0 (unreleased)
+## v0.1.0 (2026-10-29)
 
 First release.
 
