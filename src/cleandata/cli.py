@@ -184,6 +184,12 @@ def cli(log_level: str, quiet: bool, log_file: Path | None) -> None:
     setup_logging("error" if quiet else log_level, log_file)
 
 
+def _not_the_input(source: Path, target: Path | None, option: str) -> None:
+    """Refuse a target that is the input file, before anything is read (the check ``clean`` makes)."""
+    if target is not None and target.resolve() == source.resolve():
+        raise UsageError(f"{option} is the input file; choose another path")
+
+
 def _analyse(
     file: Path,
     sheets: tuple[str, ...],
@@ -230,6 +236,8 @@ def profile_command(
     from cleandata.report.build import round_floats
     from cleandata.report.html import render_html
 
+    _not_the_input(file, json_path, "--json")
+    _not_the_input(file, html_path, "--html")
     analysis = _analyse(file, sheets, encoding, delimiter, header_row, max_rows)
     for warning in analysis.warnings:
         log.warning("%s", warning)
@@ -265,6 +273,7 @@ def init_command(
     from cleandata.skeleton.init import build_skeleton
 
     target = None if out == "-" else Path(out)
+    _not_the_input(file, target, "--out")
     if target is not None and target.exists() and not force:
         raise UsageError(f"{target} exists; pass --force to replace it")
     analysis = _analyse(file, sheets, encoding, delimiter, header_row, max_rows)

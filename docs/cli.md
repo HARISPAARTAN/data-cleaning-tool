@@ -144,7 +144,7 @@ uv run clean-data clean fixtures/02_partner_respondents.csv --profile profiles/0
 |---|---|
 | 0 | success; a run without `--strict` may have rejects |
 | 1 | internal error (a bug); the message suggests `--log-level debug` |
-| 2 | usage or profile error: bad option, YAML or schema error (each with its path), a profile that cannot run chunked, a missing extra, `--out` equal to the input, `init` target exists without `--force`, a `--log-file` in a missing folder, a `SOURCE_DATE_EPOCH` that is not a whole number of seconds |
+| 2 | usage or profile error: bad option, YAML or schema error (each with its path), a profile that cannot run chunked, a missing extra, `--out`, `--rejects` or `--report` equal to the input (also `init --out`, `profile --json` and `profile --html`, refused before the file is read), `init` target exists without `--force`, a `--log-file` in a missing folder, a `SOURCE_DATE_EPOCH` that is not a whole number of seconds |
 | 3 | input error: file missing or unreadable, undecodable with the chosen encoding (byte offset given), no matching sheet, header row not found, a non-optional profile column absent, `init` on a file without usable columns |
 | 4 | quality gate: a `--strict` violation or `quality.max_reject_rate` exceeded; the cleaned output is not written, the rejects file and the reports are (`run.status` `failed_strict` or `failed_gate`) |
 | 5 | output error: target not writable or a directory, a value the output encoding cannot hold, Excel row limit (1,048,575 data rows) exceeded |

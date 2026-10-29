@@ -198,6 +198,33 @@ def test_out_equal_to_the_input_is_exit_2(tmp_path: Path) -> None:
     assert copy.read_bytes() == Path(SURVEY).read_bytes()
 
 
+def test_init_refuses_to_write_over_the_input(tmp_path: Path) -> None:
+    copy = tmp_path / "in.csv"
+    original = Path(SURVEY).read_bytes()
+    copy.write_bytes(original)
+    spellings = [str(copy), str(tmp_path / "." / "in.csv")]
+    if sys.platform == "win32":
+        spellings.append(str(copy).upper())
+    for spelling in spellings:
+        for extra in ([], ["--force"]):
+            result = invoke(["init", str(copy), "--out", spelling, *extra])
+            assert result.exit_code == 2, (spelling, extra)
+            assert "--out is the input file" in result.stderr
+            assert copy.read_bytes() == original
+
+
+@pytest.mark.parametrize("option", ["--json", "--html"])
+def test_profile_refuses_to_write_over_the_input(tmp_path: Path, option: str) -> None:
+    copy = tmp_path / "in.csv"
+    original = Path(SURVEY).read_bytes()
+    copy.write_bytes(original)
+    result = invoke(["profile", str(copy), option, str(copy)])
+    assert result.exit_code == 2
+    assert f"{option} is the input file" in result.stderr
+    assert copy.read_bytes() == original
+    assert not result.stdout
+
+
 def test_missing_file_is_exit_3(tmp_path: Path) -> None:
     result = clean(tmp_path, source=str(tmp_path / "absent.csv"))
     assert result.exit_code == 3
