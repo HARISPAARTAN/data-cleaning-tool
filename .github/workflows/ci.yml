@@ -1,0 +1,179 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv sync --locked --all-extras
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - name: mypy, default mode on the whole package
+        run: uv run mypy
+      - name: mypy, strict mode on core and report
+        run: uv run mypy --strict -p cleandata.core -p cleandata.report
+
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+        python: ["3.11", "3.12", "3.13"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: ${{ matrix.python }}
+      - run: uv sync --locked --all-extras
+      - run: uv run pytest -m "not timing"
+
+  core-only:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv sync --locked
+      - name: No optional extra is installed
+        run: uv run python -c "import importlib.util as u, sys; sys.exit(any(u.find_spec(m) for m in ('rapidfuzz', 'pyarrow')))"
+      - run: uv run pytest -m "not timing"
+
+  timing:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv sync --locked --all-extras
+      - name: Soft timing check (warns, never fails)
+        run: uv run pytest -m timing -rA
+
+  demo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      SOURCE_DATE_EPOCH: "1793232000"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv sync --locked --all-extras
+      - name: The committed demo equals a fresh build
+        run: uv run python tools/build_demo.py --check
+      - name: Clean all five fixtures
+        run: |
+          mkdir -p reports
+          uv run python tools/make_data.py --large --out "$RUNNER_TEMP/fixtures"
+          uv run clean-data clean fixtures/01_survey_export_de.csv --profile profiles/01_survey.yaml \
+            --out reports/01.cleaned.csv --rejects reports/01.rejects.csv --report reports/01.html --report reports/01.json
+          uv run clean-data clean fixtures/02_partner_respondents.csv --profile profiles/02_partner.yaml \
+            --out reports/02.cleaned.parquet --rejects reports/02.rejects.csv --report reports/02.html --report reports/02.json
+          uv run clean-data clean fixtures/03_wave_workbook.xlsx --profile profiles/03_waves.yaml \
+            --out reports/03.cleaned.xlsx --rejects reports/03.rejects.xlsx --report reports/03.html --report reports/03.json
+          uv run clean-data clean fixtures/04_legacy_partner_latin1.txt --profile profiles/04_legacy.yaml \
+            --out reports/04.cleaned.csv --rejects reports/04.rejects.csv --report reports/04.html --report reports/04.json
+          uv run clean-data clean "$RUNNER_TEMP/fixtures/05_panel_large.csv" --profile profiles/05_large.yaml \
+            --chunked --chunk-size 7000 \
+            --out reports/05.cleaned.csv --rejects reports/05.rejects.csv --report reports/05.html --report reports/05.json
+      - uses: actions/upload-artifact@v7
+        with:
+          name: reports
+          path: reports/
+
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: portfolio-kit at the pinned tag
+        uses: actions/checkout@v7
+        with:
+          repository: HARISPAARTAN/portfolio-kit
+          ref: v0.1.0
+          path: .kit
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv sync --locked --all-extras
+      - name: Fixtures equal a fresh build
+        run: uv run python tools/make_data.py --check
+      - name: The profile schema is current
+        run: uv run python tools/export_schema.py --check
+      - name: web/kit matches portfolio-kit v0.1.0
+        run: uv run python tools/sync_kit.py --check --kit .kit
+      - name: No external resource in web/ or the report template
+        run: uv run python tools/check_offline.py
+      - name: Page weight
+        run: uv run python tools/check_weight.py
+      - name: Licences of the locked runtime packages
+        run: uv run python tools/check_licences.py
+      - name: The lock file is current
+        run: uv lock --check
+
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: "0.11.8"
+          python-version: "3.13"
+      - run: uv build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+      - name: The wheel runs in a fresh environment
+        run: |
+          uv venv "$RUNNER_TEMP/fresh" --python 3.13
+          uv pip install --python "$RUNNER_TEMP/fresh/bin/python" dist/*.whl
+          "$RUNNER_TEMP/fresh/bin/clean-data" --version
