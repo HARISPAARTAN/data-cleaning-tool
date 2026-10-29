@@ -53,8 +53,12 @@ def describe_key(rule: KeyRule) -> str:
     return text + (f" by {rule.order_by}" if rule.order_by else "")
 
 
-def _sort_key(value: object) -> tuple[bool, object]:
+def sort_key(value: object) -> tuple[bool, object]:
+    """Sort key that puts nulls last and leaves the order of the other values to Python."""
     return (value is None, 0 if value is None else value)
+
+
+_sort_key = sort_key  # the name earlier code imported
 
 
 def dedupe_stage(frame: pd.DataFrame, ctx: StageContext) -> tuple[pd.DataFrame, Events]:
@@ -124,7 +128,7 @@ def dedupe_stage(frame: pd.DataFrame, ctx: StageContext) -> tuple[pd.DataFrame, 
             for members in groups.values():
                 if len(members) < 2:
                     continue
-                ordered = members if order is None else sorted(members, key=lambda p: _sort_key(order[p]))
+                ordered = members if order is None else sorted(members, key=lambda p: sort_key(order[p]))
                 winner = ordered[0] if rule.keep == "first" else ordered[-1]
                 for position in members:
                     if position != winner:

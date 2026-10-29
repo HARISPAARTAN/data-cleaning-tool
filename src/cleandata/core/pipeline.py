@@ -20,7 +20,7 @@ from typing import Any
 import pandas as pd
 
 from cleandata.core.coerce import canonical_str, describe, types_stage
-from cleandata.core.dedupe import _sort_key, dedupe_stage, describe_key
+from cleandata.core.dedupe import dedupe_stage, describe_key, sort_key
 from cleandata.core.frame import (
     CarryState,
     StageContext,
@@ -50,7 +50,7 @@ from cleandata.core.writer import (
     open_output,
     parquet_available,
 )
-from cleandata.errors import EXIT_OK, EXIT_QUALITY, MissingExtraError, UsageError
+from cleandata.errors import EXIT_OK, EXIT_QUALITY, InternalError, MissingExtraError, OutputError, UsageError
 
 log = logging.getLogger("cleandata")
 # --explain lines have their own logger: the command line shows them on stderr at every log level
@@ -131,6 +131,17 @@ def source_date_epoch() -> int | None:
     return seconds
 
 
+def check_report_folder(report: Path) -> None:
+    """Reports are written last, so a folder that cannot take one must fail the run before output moves."""
+    folder = report.resolve().parent
+    while not folder.exists() and folder != folder.parent:
+        folder = folder.parent  # the writer creates the missing folders below this one
+    if not folder.is_dir():
+        raise OutputError(f"--report {report} cannot be written: {folder} is not a directory")
+    if not os.access(folder, os.W_OK | os.X_OK):
+        raise OutputError(f"--report {report} cannot be written: {folder} is not writable")
+
+
 def check_options(profile: Profile, options: RunOptions) -> None:
     """Everything that can fail before a byte of data is read (exit 2 or 5)."""
     source_date_epoch()
@@ -150,6 +161,7 @@ def check_options(profile: Profile, options: RunOptions) -> None:
         raise UsageError("--report is required (.html or .json, once or twice)")
     for report in options.reports:
         check_output_path(report, REPORT_SUFFIXES, "--report")
+        check_report_folder(report)
         targets.append(report)
     resolved = [target.resolve() for target in targets]
     if source in resolved:
@@ -177,7 +189,7 @@ def started_now() -> tuple[str, float | None]:
 
 def sort_frame(frame: pd.DataFrame, names: list[str]) -> pd.DataFrame:
     values = [column(frame, name) for name in names]
-    order = sorted(range(row_count(frame)), key=lambda p: [_sort_key(items[p]) for items in values])
+    order = sorted(range(row_count(frame)), key=lambda p: [sort_key(items[p]) for items in values])
     return reorder(frame, order)
 
 
@@ -345,10 +357,12 @@ class _Sinks:
     rejects: RejectsSink | None = None
 
     def abort(self) -> None:
-        if self.output is not None:
-            self.output.abort()
-        if self.rejects is not None:
-            self.rejects.abort()
+        try:
+            if self.output is not None:
+                self.output.abort()
+        finally:
+            if self.rejects is not None:
+                self.rejects.abort()
 
 
 def run_clean(
@@ -474,7 +488,8 @@ def run_clean(
     except BaseException:
         sinks.abort()
         raise
-    assert plan is not None and stats is not None
+    if plan is None or stats is None:
+        raise InternalError("the reader produced no chunk, not even an empty one")
     for name, count in changed.items():
         ledger.columns.setdefault(name, ColumnTally()).changed_cells = count
     blocks = explain_blocks(ledger, plans, profile, info, columns) if options.explain else []
