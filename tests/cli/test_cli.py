@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 import importlib.util
+import logging
+import os
 import re
+import subprocess
+import sys
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 import pytest
 import yaml
+from click.testing import Result
 
 from support import FIXTURES, PROFILES, SOURCE_DATE_EPOCH, invoke
 
@@ -16,6 +22,7 @@ SUMMARY = "read 1026 · empty 8 · rejected 18 · duplicates 18 · out 982 · ex
 ENV = {"SOURCE_DATE_EPOCH": SOURCE_DATE_EPOCH}
 HAS_FUZZY = importlib.util.find_spec("rapidfuzz") is not None
 HAS_PARQUET = importlib.util.find_spec("pyarrow") is not None
+VERSION_LINE = r"clean-data \S+ \(Python 3\.\d+, pandas \S+, extras: [a-z, ]+\)\n"
 
 
 def changed_profile(tmp_path: Path, source: str, change: Any) -> str:
@@ -48,7 +55,47 @@ def clean(tmp_path: Path, *extra: str, profile: str = SURVEY_PROFILE, source: st
 def test_version() -> None:
     result = invoke(["--version"])
     assert result.exit_code == 0
-    assert re.fullmatch(r"clean-data \S+ \(Python 3\.\d+, pandas \S+, extras: [a-z, ]+\)\n", result.stdout)
+    assert re.fullmatch(VERSION_LINE, result.stdout)
+
+
+def dry_run(tmp_path: Path, before: Sequence[str] = (), after: Sequence[str] = ()) -> Result:
+    """``clean --dry-run`` on the survey with global options ``before`` and clean options ``after``."""
+    args = ["clean", SURVEY, "--profile", SURVEY_PROFILE, "--dry-run", "--report", str(tmp_path / "r.json")]
+    return invoke([*before, *args, *after], env=ENV)
+
+
+def test_python_dash_m_runs_the_same_command_line(tmp_path: Path) -> None:
+    def run(*args: str, **env: str) -> subprocess.CompletedProcess[str]:
+        return subprocess.run(
+            [sys.executable, "-m", "cleandata", *args],
+            capture_output=True,
+            text=True,
+            timeout=120,
+            check=False,
+            env={**os.environ, **env},
+        )
+
+    version = run("--version")
+    assert (version.returncode, version.stderr) == (0, "")
+    assert re.fullmatch(VERSION_LINE, version.stdout)
+    missing = run("profile", str(tmp_path / "absent.csv"))
+    assert missing.returncode == 3
+    assert "absent.csv: no such file" in missing.stderr
+    assert missing.stdout == ""
+    # a console that cannot show every character must not turn the output into a traceback
+    priced = tmp_path / "priced.csv"
+    priced.write_bytes("preis €,menge\n1,2\n".encode())
+    narrow = run("profile", str(priced), PYTHONIOENCODING="latin-1")
+    assert narrow.returncode == 0
+    assert "preis \\u20ac" in narrow.stdout
+
+
+def test_help_describes_the_clean_options() -> None:
+    text = " ".join(invoke(["clean", "--help"]).stdout.split())
+    assert "required unless --dry-run" in text
+    assert "The YAML profile that says how to clean the file." in text
+    assert "Records per chunk with --chunked." in text
+    assert "on stderr, at any log level" in text
 
 
 def test_profile_command_prints_a_table(tmp_path: Path) -> None:
@@ -298,3 +345,128 @@ def test_log_levels_and_log_file(tmp_path: Path) -> None:
         log_file.read_text(encoding="utf-8"),
         re.MULTILINE,
     )
+
+
+@pytest.mark.parametrize("before", [["--quiet"], ["--log-level", "error"], []])
+def test_explain_reaches_stderr_at_every_log_level_exactly_once(tmp_path: Path, before: list[str]) -> None:
+    result = dry_run(tmp_path, before, ["--explain"])
+    assert result.exit_code == 0
+    assert result.stdout == SUMMARY
+    assert result.stderr.count("INFO: [plan]") == 1
+    assert result.stderr.count("INFO: [write]") == 1
+    assert '[types]    household_income number(decimal=",", thousands=".")' in result.stderr
+    # the other info lines still follow the level
+    assert ("INFO: read: 1026 records" in result.stderr) is (before == [])
+
+
+def test_explain_lines_are_in_the_log_file_even_when_quiet(tmp_path: Path) -> None:
+    log_file = tmp_path / "run.log"
+    result = dry_run(tmp_path, ["--quiet", "--log-file", str(log_file)], ["--explain"])
+    assert result.exit_code == 0
+    text = log_file.read_text(encoding="utf-8")
+    assert text.count("INFO [plan]") == 1
+    assert "INFO read: 1026 records" in text
+
+
+def test_the_log_file_is_closed_when_the_command_ends(tmp_path: Path) -> None:
+    for number, source in enumerate((SURVEY, str(tmp_path / "absent.csv"))):
+        log_file = tmp_path / f"run{number}.log"
+        result = invoke(["--log-file", str(log_file), "profile", source])
+        assert result.exit_code == (0 if number == 0 else 3)
+        assert log_file.is_file()
+        assert logging.getLogger("cleandata").handlers == []
+        assert logging.getLogger("cleandata.explain").handlers == []
+        log_file.unlink()  # a handle left open would make this fail on Windows
+
+
+def test_a_log_file_that_cannot_be_opened_leaves_no_handler_behind(tmp_path: Path) -> None:
+    result = invoke(["--log-file", str(tmp_path / "missing" / "run.log"), "profile", SURVEY])
+    assert result.exit_code == 2
+    assert logging.getLogger("cleandata").handlers == []
+
+
+@pytest.mark.parametrize("value", ["0", "-1", "abc", "1.5", "", "\u00b2", "\u0661"])
+def test_a_bad_header_row_is_exit_2_without_a_traceback(value: str) -> None:
+    result = invoke(["profile", SURVEY, "--header-row", value])
+    assert result.exit_code == 2
+    assert "a 1-based row number or auto" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert result.stdout == ""
+
+
+@pytest.mark.parametrize("value", ["auto", "1", "01"])
+def test_a_good_header_row_is_accepted(value: str) -> None:
+    result = invoke(["profile", SURVEY, "--header-row", value])
+    assert result.exit_code == 0
+    assert "header     row 1\n" in result.stdout
+
+
+def test_a_header_row_beyond_the_file_is_exit_3() -> None:
+    result = invoke(["profile", SURVEY, "--header-row", "5000"])
+    assert result.exit_code == 3
+    assert "header row 5000 not found" in result.stderr
+
+
+def test_the_encoding_option_checks_the_codec() -> None:
+    bad = invoke(["profile", SURVEY, "--encoding", "klingon"])
+    assert bad.exit_code == 2
+    assert "unknown encoding 'klingon'" in bad.stderr
+    good = invoke(["profile", SURVEY, "--encoding", "utf-8-sig"])
+    assert good.exit_code == 0
+    assert "encoding   utf-8-sig (given)" in good.stdout
+
+
+def test_the_delimiter_option_takes_a_word_or_the_character() -> None:
+    bad = invoke(["profile", SURVEY, "--delimiter", "::"])
+    assert bad.exit_code == 2
+    assert "use comma, semicolon, tab or pipe" in bad.stderr
+    for value in ("semicolon", "SEMICOLON", ";"):
+        good = invoke(["profile", SURVEY, "--delimiter", value])
+        assert good.exit_code == 0
+        assert "delimiter  ';'" in good.stdout
+    tab = invoke(["profile", str(FIXTURES / "04_legacy_partner_latin1.txt"), "--delimiter", "tab"])
+    assert tab.exit_code == 0
+    assert "delimiter  '\\t'" in tab.stdout
+
+
+@pytest.mark.parametrize("content", ["a,b,c\n", "a,b\n,\n,\n"])
+def test_init_on_a_file_without_usable_columns_is_exit_3(content: str, tmp_path: Path) -> None:
+    source = tmp_path / "empty.csv"
+    source.write_bytes(content.encode())
+    result = invoke(["init", str(source)])
+    assert result.exit_code == 3
+    assert "ERROR: no usable columns found in empty.csv" in result.stderr
+    assert "internal error" not in result.stderr
+    assert result.stdout == ""
+
+
+def test_an_unexpected_error_is_exit_1_and_the_traceback_needs_debug(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def broken(*args: Any, **kwargs: Any) -> None:
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr("cleandata.core.pipeline.run_clean", broken)
+    plain = dry_run(tmp_path)
+    assert plain.exit_code == 1
+    assert "ERROR: internal error: RuntimeError: boom (run with --log-level debug for the traceback)" in (
+        plain.stderr
+    )
+    assert "Traceback" not in plain.stderr
+    assert plain.stdout == ""
+    debug = dry_run(tmp_path, ["--log-level", "debug"])
+    assert debug.exit_code == 1
+    assert "Traceback (most recent call last)" in debug.stderr
+    assert "RuntimeError: boom" in debug.stderr
+
+
+def test_ctrl_c_is_exit_130(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    def interrupted(*args: Any, **kwargs: Any) -> None:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr("cleandata.core.pipeline.run_clean", interrupted)
+    result = dry_run(tmp_path)
+    assert result.exit_code == 130
+    assert "ERROR: interrupted; temporary files removed" in result.stderr
+    assert "Traceback" not in result.stderr
+    assert result.stdout == ""

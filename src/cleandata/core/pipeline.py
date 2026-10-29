@@ -53,6 +53,8 @@ from cleandata.core.writer import (
 from cleandata.errors import EXIT_OK, EXIT_QUALITY, MissingExtraError, UsageError
 
 log = logging.getLogger("cleandata")
+# --explain lines have their own logger: the command line shows them on stderr at every log level
+explain_log = logging.getLogger("cleandata.explain")
 
 DEFAULT_CHUNK_SIZE = 100_000
 Stage = Callable[[pd.DataFrame, StageContext], tuple[pd.DataFrame, Events]]
@@ -380,7 +382,7 @@ def run_clean(
         )
     explain = explain_plan(profile, plans, info, options.chunked) if options.explain else []
     for line in explain:
-        log.info(line)
+        explain_log.info(line)
     state = CarryState()
     in_memory = not options.chunked
     sinks = _Sinks()
@@ -477,7 +479,7 @@ def run_clean(
         ledger.columns.setdefault(name, ColumnTally()).changed_cells = count
     blocks = explain_blocks(ledger, plans, profile, info, columns) if options.explain else []
     for line in blocks:
-        log.info(line)
+        explain_log.info(line)
     duration = None if clock is None else round(time.perf_counter() - clock, 3)
     report = build_report(
         ReportInput(

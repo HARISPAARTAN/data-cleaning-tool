@@ -25,6 +25,7 @@ from cleandata import __version__
 from cleandata.errors import EXIT_INTERNAL, EXIT_INTERRUPTED, CleanDataError, UsageError
 
 log = logging.getLogger("cleandata")
+explain_log = logging.getLogger("cleandata.explain")
 F = TypeVar("F", bound=Callable[..., Any])
 DELIMITER_WORDS = {"tab": "\t", "\\t": "\t", "comma": ",", "semicolon": ";", "pipe": "|"}
 LEVELS = ("debug", "info", "warning", "error")
@@ -51,16 +52,29 @@ def _print_version(ctx: click.Context, _param: click.Parameter, value: bool) -> 
         ctx.exit(0)
 
 
+def close_logging() -> None:
+    """Remove and close every handler, so a ``--log-file`` is not held open once the command is over."""
+    for logger in (log, explain_log):
+        for handler in list(logger.handlers):
+            logger.removeHandler(handler)
+            handler.close()
+
+
 def setup_logging(level: str, log_file: Path | None) -> None:
-    for handler in list(log.handlers):
-        log.removeHandler(handler)
-        handler.close()
+    close_logging()
+    formatter = logging.Formatter("%(levelname)s: %(message)s")
     stream = logging.StreamHandler(sys.stderr)
     stream.setLevel(level.upper())
-    stream.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    stream.setFormatter(formatter)
+    stream.addFilter(lambda record: not record.name.startswith(explain_log.name))
     log.addHandler(stream)
     log.setLevel(logging.DEBUG if log_file is not None else level.upper())
     log.propagate = False
+    # --explain is an explicit request: its lines reach stderr whatever the level (and the log file)
+    explain_stream = logging.StreamHandler(sys.stderr)
+    explain_stream.setFormatter(formatter)
+    explain_log.addHandler(explain_stream)
+    explain_log.setLevel(logging.INFO)
     if log_file is not None:
         try:
             file_handler = logging.FileHandler(log_file, encoding="utf-8")
@@ -123,7 +137,7 @@ def _delimiter(_ctx: click.Context, _param: click.Parameter, value: str | None) 
 def _header_row(_ctx: click.Context, _param: click.Parameter, value: str | None) -> int | str | None:
     if value is None or value == "auto":
         return value
-    if value.isdigit() and int(value) >= 1:
+    if value.isascii() and value.isdigit() and int(value) >= 1:
         return int(value)
     raise click.BadParameter("a 1-based row number or auto")
 
@@ -167,6 +181,7 @@ def read_overrides(func: F) -> F:
 )
 def cli(log_level: str, quiet: bool, log_file: Path | None) -> None:
     """Clean messy CSV and Excel exports reproducibly from a YAML profile."""
+    click.get_current_context().call_on_close(close_logging)
     setup_logging("error" if quiet else log_level, log_file)
 
 
@@ -266,8 +281,18 @@ def init_command(
 
 @cli.command("clean")
 @click.argument("file", type=click.Path(path_type=Path))
-@click.option("--profile", "profile_path", required=True, type=click.Path(dir_okay=False, path_type=Path))
-@click.option("--out", type=click.Path(path_type=Path), help=".csv, .xlsx or .parquet")
+@click.option(
+    "--profile",
+    "profile_path",
+    required=True,
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="The YAML profile that says how to clean the file.",
+)
+@click.option(
+    "--out",
+    type=click.Path(path_type=Path),
+    help=".csv, .xlsx or .parquet for the cleaned rows; required unless --dry-run.",
+)
 @click.option(
     "--report",
     "reports",
@@ -279,9 +304,19 @@ def init_command(
 @click.option("--rejects", type=click.Path(path_type=Path), help=".csv or .xlsx")
 @click.option("--dry-run", is_flag=True, help="Run every stage, write only the reports.")
 @click.option("--strict", is_flag=True, help="Exit 4 on any non-duplicate reject or warning.")
-@click.option("--explain", is_flag=True, help="Log the resolved plan and every rule with examples.")
+@click.option(
+    "--explain",
+    is_flag=True,
+    help="Print the resolved plan and every rule with examples on stderr, at any log level.",
+)
 @click.option("--chunked", is_flag=True, help="Stream the file in chunks (chunk-compatible profiles only).")
-@click.option("--chunk-size", type=int, default=100_000, show_default=True)
+@click.option(
+    "--chunk-size",
+    type=int,
+    default=100_000,
+    show_default=True,
+    help="Records per chunk with --chunked.",
+)
 @handled
 def clean_command(
     file: Path,
