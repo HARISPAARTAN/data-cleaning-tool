@@ -62,7 +62,10 @@ def setup_logging(level: str, log_file: Path | None) -> None:
     log.setLevel(logging.DEBUG if log_file is not None else level.upper())
     log.propagate = False
     if log_file is not None:
-        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        try:
+            file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        except OSError as exc:
+            raise click.UsageError(f"cannot open the log file {log_file}: {exc.strerror or exc}") from None
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(
             logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%dT%H:%M:%S")

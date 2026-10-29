@@ -90,6 +90,21 @@ def test_notices_add_up_and_info_is_not_a_warning() -> None:
     assert [notice.code for notice in ledger.warnings()] == ["structure.short_records"]
 
 
+def test_a_notice_key_keeps_one_notice_per_key() -> None:
+    ledger = Ledger(5, 20)
+    ledger.notice("missing.all_null", "a: all null", key="a")
+    ledger.notice("missing.all_null", "b: all null", key="b")
+    ledger.notice("missing.all_null", "a: all null", key="a")
+    ledger.notice("plain", "first")
+    ledger.notice("plain", "second")
+    assert [(n.message, n.count) for n in ledger.notices.values()] == [
+        ("a: all null", 2),
+        ("b: all null", 1),
+        ("first", 2),
+    ]
+    assert "plain" in ledger.notices
+
+
 def test_tallies_keep_the_first_examples_only() -> None:
     tally = RuleTally("age.max", "max", "age", {"max": 99}, checked=10, failed=2, examples=["r4", "r9"])
     tally.merge(RuleTally("age.max", "max", "age", {"max": 99}, checked=5, failed=1, examples=["r20"]), 2)

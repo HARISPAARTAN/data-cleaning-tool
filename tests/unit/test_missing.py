@@ -3,6 +3,7 @@ from __future__ import annotations
 from cleandata.core.coerce import types_stage
 from cleandata.core.dedupe import dedupe_stage
 from cleandata.core.frame import CarryState, column
+from cleandata.core.ledger import Ledger
 from cleandata.core.missing import median_of, missing_stage
 from cleandata.core.text import normalise_stage
 from support import context, frame_of, profile_of
@@ -76,3 +77,18 @@ def test_drop_sends_rows_to_the_rejects() -> None:
 def test_all_null_column_warns() -> None:
     _, events = run({"x": {"type": "number", "missing": "median"}}, [[""], [""]])
     assert [notice.code for notice in events.notices] == ["missing.all_null"]
+
+
+def test_every_all_null_column_gets_its_own_notice() -> None:
+    columns = {
+        "a": {"type": "number", "missing": "median"},
+        "b": {"type": "integer", "missing": "median"},
+        "c": {"type": "number", "missing": "median"},
+    }
+    _, events = run(columns, [["", "", "1"], ["", "", "3"]])
+    ledger = Ledger(5, 20)
+    ledger.absorb(events)
+    messages = [notice.message for notice in ledger.warnings() if notice.code == "missing.all_null"]
+    assert len(messages) == 2
+    assert messages[0].startswith("a: ") and messages[1].startswith("b: ")
+    assert all(notice.count == 1 for notice in ledger.warnings())

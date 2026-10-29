@@ -24,13 +24,13 @@ from cleandata.core.frame import (
 from cleandata.core.headers import plan_headers, structure_stage
 from cleandata.core.ledger import Ledger
 from cleandata.core.missing import missing_stage
-from cleandata.core.pipeline import RunOptions, chunk_problems, run_clean
+from cleandata.core.pipeline import RunOptions, chunk_problems, run_clean, started_now
 from cleandata.core.profile import Profile, load_profile
 from cleandata.core.reader import ReadOptions, open_source
 from cleandata.core.text import normalise_stage
 from cleandata.core.validate import validate_stage
-from cleandata.errors import InternalError
-from support import FIXTURE_FILES, FIXTURES, PROFILES
+from cleandata.errors import InternalError, UsageError
+from support import FIXTURE_FILES, FIXTURES, PROFILES, profile_of
 
 
 def stages(number: str) -> Iterator[tuple[str, pd.DataFrame, pd.DataFrame]]:
@@ -181,6 +181,45 @@ def test_broken_accounting_is_an_internal_error() -> None:
     ledger.counts["out"] = 2
     with pytest.raises(InternalError, match="row accounting"):
         ledger.check_accounting()
+
+
+@pytest.mark.parametrize("value", ["abc", "1.5", "12s", "99999999999999999999"])
+def test_a_bad_source_date_epoch_is_a_usage_error_before_any_read(
+    value: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", value)
+    profile, _ = load_profile(PROFILES / "01_survey.yaml")
+    report = tmp_path / "r.json"
+    options = RunOptions(input=tmp_path / "does-not-exist.csv", dry_run=True, reports=(report,))
+    with pytest.raises(UsageError, match="SOURCE_DATE_EPOCH must be a whole number of seconds") as caught:
+        run_clean(profile, "01_survey.yaml", "0" * 64, options)
+    assert caught.value.exit_code == 2
+    assert not report.exists()
+
+
+def test_a_whole_source_date_epoch_pins_the_timestamp(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1793232000")
+    assert started_now() == ("2026-10-29T00:00:00Z", None)
+    monkeypatch.setenv("SOURCE_DATE_EPOCH", "")
+    assert started_now()[1] is not None
+
+
+def test_the_report_names_every_all_null_median_column(tmp_path: Path) -> None:
+    source = tmp_path / "in.csv"
+    source.write_text("id,a,b,c\n1,,,5\n2,,,6\n", encoding="utf-8")
+    profile = profile_of(
+        {
+            "id": {"type": "string"},
+            "a": {"type": "number", "missing": "median"},
+            "b": {"type": "number", "missing": "median"},
+            "c": {"type": "number", "missing": "median"},
+        }
+    )
+    options = RunOptions(input=source, dry_run=True, reports=(tmp_path / "r.json",))
+    warnings = run_clean(profile, "p.yaml", "0" * 64, options).report["warnings"]
+    named = [item for item in warnings if item["code"] == "missing.all_null"]
+    assert [item["message"].split(":")[0] for item in named] == ["a", "b"]
+    assert all(item["count"] == 1 for item in named)
 
 
 def test_chunk_problems_list_every_reason(tmp_path: Path) -> None:

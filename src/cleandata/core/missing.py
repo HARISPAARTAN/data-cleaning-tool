@@ -86,7 +86,11 @@ def missing_stage(frame: pd.DataFrame, ctx: StageContext) -> tuple[pd.DataFrame,
             fill = median_of(values, plan.type)
             if fill is None and values:
                 events.notices.append(
-                    Notice("missing.all_null", f"{name}: every value is null, so there is no median to fill")
+                    Notice(
+                        "missing.all_null",
+                        f"{name}: every value is null, so there is no median to fill",
+                        key=name,
+                    )
                 )
             result = [fill if value is None else value for value in values]
         else:

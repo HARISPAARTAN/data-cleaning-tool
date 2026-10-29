@@ -224,6 +224,40 @@ def test_report_twice_and_three_times(tmp_path: Path) -> None:
     assert three.exit_code == 2
 
 
+@pytest.mark.parametrize("value", ["abc", "1.5", "99999999999999999999"])
+def test_a_bad_source_date_epoch_exits_2_and_writes_nothing(tmp_path: Path, value: str) -> None:
+    result = invoke(
+        [
+            "clean",
+            SURVEY,
+            "--profile",
+            SURVEY_PROFILE,
+            "--out",
+            str(tmp_path / "out.csv"),
+            "--rejects",
+            str(tmp_path / "rejects.csv"),
+            "--report",
+            str(tmp_path / "report.json"),
+        ],
+        env={"SOURCE_DATE_EPOCH": value},
+    )
+    assert result.exit_code == 2
+    assert "ERROR: SOURCE_DATE_EPOCH must be a whole number of seconds" in result.stderr
+    assert "internal error" not in result.stderr
+    assert result.stdout == ""
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_a_log_file_in_a_missing_folder_is_a_usage_error(tmp_path: Path) -> None:
+    result = invoke(["--log-file", str(tmp_path / "missing" / "run.log"), "profile", SURVEY])
+    assert result.exit_code == 2
+    assert "Error: cannot open the log file" in result.stderr
+    assert str(tmp_path / "missing" / "run.log") in result.stderr
+    assert "Traceback" not in result.stderr
+    assert result.stdout == ""
+    assert not (tmp_path / "missing").exists()
+
+
 def test_log_levels_and_log_file(tmp_path: Path) -> None:
     quiet = invoke(
         [

@@ -116,8 +116,22 @@ def chunk_problems(profile: Profile, options: RunOptions) -> list[str]:
     return reasons
 
 
+def source_date_epoch() -> int | None:
+    """``SOURCE_DATE_EPOCH`` in whole seconds; None when unset or empty; anything else is a usage error."""
+    epoch = os.environ.get("SOURCE_DATE_EPOCH")
+    if not epoch:
+        return None
+    try:
+        seconds = int(epoch)
+        dt.datetime.fromtimestamp(seconds, dt.UTC)
+    except (ValueError, OverflowError, OSError):
+        raise UsageError("SOURCE_DATE_EPOCH must be a whole number of seconds") from None
+    return seconds
+
+
 def check_options(profile: Profile, options: RunOptions) -> None:
     """Everything that can fail before a byte of data is read (exit 2 or 5)."""
+    source_date_epoch()
     source = options.input.resolve()
     targets: list[Path] = []
     if options.out is None and not options.dry_run:
@@ -152,9 +166,9 @@ def check_options(profile: Profile, options: RunOptions) -> None:
 
 def started_now() -> tuple[str, float | None]:
     """The run's timestamp; with SOURCE_DATE_EPOCH set it is that instant and no duration is measured."""
-    epoch = os.environ.get("SOURCE_DATE_EPOCH")
-    if epoch:
-        moment = dt.datetime.fromtimestamp(int(epoch), dt.UTC)
+    epoch = source_date_epoch()
+    if epoch is not None:
+        moment = dt.datetime.fromtimestamp(epoch, dt.UTC)
         return moment.strftime("%Y-%m-%dT%H:%M:%SZ"), None
     return dt.datetime.now(dt.UTC).strftime("%Y-%m-%dT%H:%M:%SZ"), time.perf_counter()
 
@@ -341,8 +355,8 @@ def run_clean(
     """Clean one file; raises ``CleanDataError`` subclasses for exit codes 1, 2, 3 and 5."""
     from cleandata.report.build import ReportInput, build_report, write_reports
 
-    started_at, clock = started_now()
     check_options(profile, options)
+    started_at, clock = started_now()
     plans = profile.column_plans()
     default_text = profile.default_text_plan()
     source = open_source(options.input, ReadOptions.from_profile(profile))

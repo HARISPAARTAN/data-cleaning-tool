@@ -39,6 +39,7 @@ class Notice:
     message: str
     count: int = 1
     level: Level = "warning"
+    key: str = ""
 
 
 @dataclass
@@ -152,17 +153,21 @@ class Ledger:
         self.by_column: Counter[str] = Counter()
         self.preview: list[Reject] = []
 
-    def notice(self, code: str, message: str, count: int = 1, level: Level = "warning") -> None:
-        existing = self.notices.get(code)
+    def notice(
+        self, code: str, message: str, count: int = 1, level: Level = "warning", key: str = ""
+    ) -> None:
+        """Notices merge by code; a ``key`` (such as a column name) keeps one notice per key."""
+        slot = f"{code}:{key}" if key else code
+        existing = self.notices.get(slot)
         if existing is None:
-            self.notices[code] = Notice(code, message, count, level)
+            self.notices[slot] = Notice(code, message, count, level, key)
         else:
             existing.count += count
 
     def absorb(self, events: Events) -> None:
         self.counts.update(events.counts)
         for notice in events.notices:
-            self.notice(notice.code, notice.message, notice.count, notice.level)
+            self.notice(notice.code, notice.message, notice.count, notice.level, notice.key)
         for tally in events.rules:
             known = self.rules.get(tally.id)
             if known is None:
