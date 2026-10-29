@@ -17,14 +17,14 @@ Top-level keys, in this order:
 | `title` | `report.title` or the profile name; a dry run has the same title (`run.dry_run` and the badge of the HTML report mark it). |
 | `tool` | `name` (`clean-data`), `distribution` (`data-cleaning-tool`), `version`, `python` (major.minor) and `packages`: the installed versions of pandas, pydantic, click, openpyxl, charset-normalizer, PyYAML, Jinja2, rapidfuzz and pyarrow (`null` when an extra is not installed). |
 | `run` | `started_at` (UTC, `YYYY-MM-DDTHH:MM:SSZ`), `duration_s` (seconds, or `null` with `SOURCE_DATE_EPOCH`), `mode` (`in_memory` or `chunked`), `chunk_size` (`null` in memory), `dry_run`, `strict`, `status` (`ok`, `failed_strict` or `failed_gate`) and `exit_code`. |
-| `input` | `name` (base name), `size` (bytes), `sha256`, `kind` (`csv` or `xlsx`), `encoding` (`name`, `method` of `bom`, `utf-8`, `detected` or `given`, and `confidence` for a detected encoding), `delimiter` (`value` and the consistency `share` when it was sniffed), `header_row`, `sheets` (per sheet read: `name`, `header_row`, `records`), `ignored_sheets`, `records`, `footer_skipped`, `short_records` and `malformed`. |
+| `input` | `name` (base name), `size` (bytes), `sha256`, `kind` (`csv` or `xlsx`), `encoding` (`name`, `method` of `bom`, `utf-8`, `western`, `detected` or `given`, and `confidence` for a `detected` or `western` encoding; `western` is Windows-1252 text recognised by bytes in the range 0x80 to 0x9F), `delimiter` (`value` and the consistency `share` when it was sniffed), `header_row`, `sheets` (per sheet read: `name`, `header_row`, `records`), `ignored_sheets`, `records`, `footer_skipped`, `short_records` and `malformed`. For a workbook, `encoding`, `delimiter` and `header_row` are `null`: the header row of each sheet is in `sheets`. |
 | `profile` | `name`, `file` (base name) and `sha256` of the profile file. |
-| `headers` | One entry per input column and per added column: `position` (0-based, `null` for added columns), `raw`, `normalised`, `final` and `action` (`kept`, `renamed`, `kept_unlisted`, `dropped`, `dropped_unlisted`, `dropped_empty`, `absent_optional` or `sheet_column`). |
+| `headers` | One entry per input column and per added column: `position` (1-based, `null` for added columns), `raw`, `normalised`, `final` and `action` (`kept`, `renamed`, `kept_unlisted`, `dropped`, `dropped_unlisted`, `dropped_empty`, `absent_optional` or `sheet_column`). |
 | `rows` | `read`, `empty`, `rejected`, `duplicates`, `out`, `reject_rate` (`rejected / (read - empty)`), `max_reject_rate` (the gate or `null`) and `by_rule` (removed rows per first failing rule). `read = out + rejected + duplicates + empty` holds in every report. |
 | `columns` | One entry per output column (see below). |
 | `rules` | One entry per validation rule: `id` (`age.max`), `kind`, `column`, `parameters`, `checked`, `failed` and up to `report.examples_per_rule` `examples` such as `r118 "130"`. A row can fail several rules, so the counts can add up to more than the rejected rows. |
 | `dedupe` | `exact` (`checked`, `removed`, or `null` when off), `keys` (per rule: `id`, `columns`, `keep`, `order_by`, `checked`, `removed`) and `fuzzy` (see below, or `null`). |
-| `rejects` | `file` (base name or `null`), `rows`, `by_stage` (`read`, `validate`, `dedupe`, `missing`), `by_rule`, `by_column` and `preview`: the first `report.preview_rows` rejects rows with `source_row`, `stage`, `rule`, `detail` and the raw `values`. |
+| `rejects` | `file` (base name or `null`), `rows`, `by_stage` (`read`, `validate`, `dedupe`, `missing`), `by_rule`, `by_column` and `preview`: the first `report.preview_rows` rejects rows with `source_row`, `source_sheet` (workbook input only), `stage`, `rule`, `detail` and the raw `values`. |
 | `warnings` | Notices that `--strict` turns into exit 4: `code`, `message` and `count`. |
 | `notes` | Informational notices (empty columns dropped, repeated headers numbered, sheets not matched). |
 | `explain` | With `--explain`: the lines of the explain log; else `null`. |
@@ -35,16 +35,16 @@ Top-level keys, in this order:
 | Key | Content |
 |---|---|
 | `type` | The profile type; `string` for kept unlisted, sheet and cluster columns. |
-| `source` | `profile`, `unlisted`, `sheet` or `cluster`. |
-| `before` | Taken after stage 2 on the raw values: `non_empty`, `null_like` (null tokens seen), `distinct` and `distinct_capped` (exact up to 10,000), `top` (five most frequent values with counts), `min_length`, `max_length`, `whitespace` (cells with leading, trailing or repeated whitespace), `non_nfc` and `control` (cells with control or zero-width characters). |
-| `after` | Taken on the written frame: `count` (non-null), `nulls`, `distinct`, `distinct_capped`, `min`, `max`, `mean` and `median` (numbers and integers), `top` (strings and booleans) and `filled`. In chunked mode `median` and `top` are `null` and `distinct` stops at 10,000. |
+| `source` | `profile`, `unlisted` or `cluster`. The sheet column of a workbook run (`input.sheet_column`) appears as `unlisted`. |
+| `before` | Taken after stage 2 on the raw values: `non_empty`, `null_like` (non-empty cells that hold a null token), `distinct` and `distinct_capped` (exact up to 10,000), `top` (five most frequent values with counts; `null` in chunked mode), `min_length`, `max_length`, `whitespace` (cells with leading, trailing or repeated whitespace), `non_nfc` and `control` (cells with control or zero-width characters). |
+| `after` | Taken on the written frame: `count` (non-null), `nulls`, `distinct`, `distinct_capped`, `min` and `max` (numbers, integers, dates and datetimes; dates as ISO strings), `mean` and `median` (numbers and integers), `top` (strings and booleans) and `filled`. `distinct` stops at 10,000 in both modes (`distinct_capped` is then `true`); in chunked mode `median` and `top` are `null`. |
 | `coercion` | `parsed`, `null`, `invalid`, `nulled` (by `on_invalid: null`) and `patterns` (values per date pattern, `native` for Excel values); `null` for unlisted, sheet and cluster columns. |
 | `missing` | `strategy`, the fill `value` (typed: `68000.0`, `6`) and `filled`; `null` when the strategy is `keep`. |
 | `changed_cells` | Output cells whose canonical string differs from the raw value as read. |
 
 ### `dedupe.fuzzy`
 
-`threshold`, `action`, `block_on`, `cluster_column`, `blocks` (blocks with at least one row), `blocks_compared` (blocks with two rows or more), `skipped_blocks` (above `max_block_size`), `clustered_rows`, `removed` (with `action: remove`) and `clusters`: per cluster its `id` (`f0001`), the `members` (`label`, `source_row`, `source_sheet`) and the pair `scores` that joined them (`a`, `b`, `score`). The HTML report lists the first 50 clusters.
+`threshold`, `action`, `block_on`, `cluster_column` (`null` with `action: remove`, which writes no such column), `blocks` (blocks with at least one row), `blocks_compared` (blocks with two rows or more that were scored, so without the skipped blocks), `skipped_blocks` (above `max_block_size`), `clustered_rows`, `removed` (with `action: remove`) and `clusters`: per cluster its `id` (`f0001`), the `members` (`label`, `source_row`, `source_sheet`) and the pair `scores` that joined them (`a`, `b`, `score`). The HTML report lists the first 50 clusters.
 
 ### Redaction
 
@@ -72,4 +72,4 @@ Tables scroll inside their own container at 390 px, and header cells carry `scop
 
 `profile --json` writes, in this order: `schema_version`, `kind` (`profile`), `title` ("Profile of" and the file name), `tool`, `input` (as above), `records` (`analysed`, `empty`, `short`, `malformed`, `duplicates` and `stopped_early` at `--max-rows`), `sheets` (every sheet of a workbook with `name`, `header_row`, `records` and `selected`), `columns`, `file_notes` (`duplicate_headers`, `empty_columns`, `duplicate_records`, the `locale` vote with its `votes`, and the `date_formats` and `datetime_formats` found), `warnings` (ambiguity notes with the code `profile.note`), `banner` and `footer` (`null`).
 
-Each entry of `columns` has `position`, `raw`, `normalised`, the `before` statistics of the clean report (`non_empty` to `control`), `candidates` (per type the share of non-null values it parses), the `guess`, a few `examples` and the `notes` for that column. `--html` renders the same with the report template.
+Each entry of `columns` has `position`, `raw`, `normalised`, the `before` statistics of the clean report (`non_empty` to `control`; here `null_like` is not one number but a mapping from each null-like token seen to its count, such as `{"k.A.": 3}`), `candidates` (per type the share of non-null values it parses), the `guess`, a few `examples` and the `notes` for that column. `--html` renders the same with the report template.

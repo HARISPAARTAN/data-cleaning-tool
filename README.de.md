@@ -67,7 +67,7 @@ dedupe: {exact: true, keys: [{columns: [respondent_id], keep: last}]}
 quality: {max_reject_rate: 0.05}
 ```
 
-Jeder Schlüssel steht in der [Profilreferenz](docs/profile-reference.md) (englisch), und [docs/profile.schema.json](docs/profile.schema.json) liefert Editoren die Vervollständigung. Die Ausschussdatei enthält jede entfernte Zeile mit `_source_row`, `_stage`, `_rule` und `_detail`, danach die Rohwerte wie gelesen; der JSON-Bericht ist Feld für Feld in [docs/report.md](docs/report.md) beschrieben. Fixtures, Ausschussspalten und Berichtsabschnitte: [docs/data-model.md](docs/data-model.md).
+Jeder Schlüssel steht in der [Profilreferenz](docs/profile-reference.md) (englisch), und [docs/profile.schema.json](docs/profile.schema.json) liefert Editoren die Vervollständigung. Die Ausschussdatei enthält jede entfernte Zeile mit `_source_row`, `_source_sheet` (nur bei Excel-Eingabe), `_stage`, `_rule` und `_detail`, danach die Rohwerte wie gelesen; der JSON-Bericht ist Feld für Feld in [docs/report.md](docs/report.md) beschrieben. Fixtures, Ausschussspalten und Berichtsabschnitte: [docs/data-model.md](docs/data-model.md).
 
 ## Erste Schritte
 

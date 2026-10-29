@@ -79,7 +79,7 @@ input:
 
 ### `input.delimiter`
 
-Default `auto`. One of `","`, `";"`, `"\t"` (or the word `tab`) and `"|"`. With `auto`, the first 50 records of the first 64 KiB are parsed with each candidate; the score is the share of records with the most common field count, candidates whose common count is below 2 drop out, and the highest score wins (then the larger field count, then the order above). No candidate means a single-column file and the warning `read.single_column`. Ignored for Excel input.
+Default `auto`. One of `","`, `";"`, `"\t"` (or the word `tab`) and `"|"`. With `auto`, the first 50 records of the first 64 KiB are parsed with each candidate; the score is the share of records with the most common field count, and candidates whose common count is below 2 drop out. Scores within 0.05 of the best count as equal; among those the larger field count wins, then the order above. A candidate whose first record (normally the header) has the most common field count is preferred: when the winner's first record has another count, the next best candidate is tried, and if none qualifies the best one whose first record still holds the delimiter is used, so a ragged file keeps its delimiter while a single-column header vetoes it. No candidate means a single-column file and the warning `read.single_column`. Ignored for Excel input.
 
 ```yaml
 input:
@@ -260,7 +260,7 @@ Each entry under `columns` is one output column. The key is the name after heade
 
 ### `columns.<name>.type`
 
-Required. `string`, `integer`, `number`, `boolean`, `date` or `datetime`. Coercion happens in stage 4 with the column's locale: numbers lose `strip` substrings and all whitespace, take an optional sign, follow `decimal` and `thousands`, allow an exponent only without grouping; an integer is a number with a zero fraction (`45.000,00` gives 45000; `12,5` is invalid); booleans use the true and false lists; dates and datetimes the pattern lists. A value that does not parse is invalid (see `on_invalid`). String columns have no type rule.
+Required. `string`, `integer`, `number`, `boolean`, `date` or `datetime`. Coercion happens in stage 4 with the column's locale: numbers lose `strip` substrings and then leading and trailing whitespace (whitespace inside a number stays, so `12 34` is invalid; a space or no-break space between groups of three digits counts as a grouping separator only when `thousands` is set, as in `1 234,5` with `decimal: ","` and `thousands: " "`), take an optional sign, follow `decimal` and `thousands`, allow an exponent only without grouping; an integer is a number with a zero fraction (`45.000,00` gives 45000; `12,5` is invalid); booleans use the true and false lists; dates and datetimes the pattern lists. A value that does not parse is invalid (see `on_invalid`). String columns have no type rule.
 
 ```yaml
 columns:
@@ -330,11 +330,12 @@ columns:
 
 ### `columns.<name>.strip`
 
-Default `[]`. Substrings removed before a number is parsed (currency signs, units). Only number and integer columns use it.
+Default `[]`. Substrings removed, in the order listed, from a text cell before it is coerced to the column's type (currency signs, units, a stray `!`). It applies to every type: number, integer, boolean, date, datetime and string, where the column keeps the stripped text.
 
 ```yaml
 columns:
   amount_gbp: {type: number, strip: ["£"]}
+  opted_in: {type: boolean, strip: ["!"]}
 ```
 
 ### `columns.<name>.locale`
@@ -513,7 +514,7 @@ Default `flag`. `flag` keeps every row and writes the cluster id (`f0001`, `f000
 
 #### `dedupe.fuzzy.cluster_column`
 
-Default `dup_cluster`. The column written by `flag`, last in the output. It may not be a profile column.
+Default `dup_cluster`. The column written by `flag`, last in the output. It applies only with `action: flag` (`remove` writes no such column, and the report shows `cluster_column: null`), and then it may not be a profile column or the sheet column.
 
 #### `dedupe.fuzzy.max_block_size`
 
@@ -616,10 +617,10 @@ After the keys are validated, the whole profile is checked, and every problem is
 
 - column names may not be empty or start with `_` (the rejects file's meta columns start with `_`);
 - `dedupe.keys[].columns`, `order_by`, `dedupe.fuzzy.block_on`, `dedupe.fuzzy.fields[].columns`, `output.sort_by` and `report.redact` must name profile columns or the sheet column;
-- `dedupe.fuzzy.cluster_column` may not be a profile column;
+- with `action: flag`, `dedupe.fuzzy.cluster_column` may not be a profile column or the sheet column (with `remove` it is not checked);
 - `headers.rename` targets must be snake_case and unique;
 - `decimal` and `thousands` must differ, every date and datetime pattern must round-trip a sample date, and no value may be both true and false;
-- `min` and `max` only on integer, number, date and datetime columns, and every bound, allowed value and constant fill must parse as the column's type;
+- `min` and `max` only on integer, number, date and datetime columns, and every bound, allowed value and constant fill must parse as the column's type; `max` may not be below `min`, and datetime bounds must be naive (no time zone);
 - a `regex` must compile;
 - `median` needs an integer or number column, and only `constant` takes a `value`;
 - a `map` must be idempotent.

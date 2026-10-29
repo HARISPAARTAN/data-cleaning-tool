@@ -6,7 +6,7 @@
 clean-data [--log-level debug|info|warning|error] [--quiet] [--log-file PATH] [--version] COMMAND ...
 ```
 
-Every block marked as runnable on this page is executed by `tests/docs/test_run_blocks.py` from the repository root with the stated exit code, so the examples stay correct. The commands are the same in PowerShell and bash; only line continuations differ (a trailing backtick in PowerShell, a trailing backslash in bash).
+Every block marked as runnable on this page is executed by `tests/docs/test_run_blocks.py` with the stated exit code, so the examples stay correct. Each block runs in its own fresh temporary workspace that holds copies of fixtures 1 to 4 under `fixtures/` and of the profiles under `profiles/`, so the relative paths below resolve there, files written by one block do not exist in the next, and nothing is written into the repository. The commands are the same in PowerShell and bash; only line continuations differ (a trailing backtick in PowerShell, a trailing backslash in bash).
 
 ## Global options
 
@@ -49,7 +49,7 @@ The Latin-1 file has no BOM and is not valid UTF-8, so the encoding is detected 
 clean-data init FILE [--out PATH|-] [--force] [the read options of profile]
 ```
 
-Runs the same analysis and writes a profile skeleton with comments: `input` with the detected encoding, delimiter, header row, sheets and the voted locale; `headers` with an empty `rename` whose comment lists every normalised name, and `drop` for empty columns; one `columns` entry per non-empty column with the guessed type (a type needs 95 % of the non-null values, else `string`), per-column date patterns where they differ from the global ones, and comments with counts, examples and ambiguity notes; `dedupe: {exact: true}`. It adds no validation rules and no missing-value strategies: those are the analyst's decisions. The skeleton is validated before it is written. Default `--out -` (stdout); an existing file needs `--force`, else exit 2. An explicit `--header-row` is kept in the skeleton of a workbook as well. A file without usable columns (no records, or every column empty) is an input error, exit 3. The first comment lines of the skeleton point to [profile-reference.md](profile-reference.md).
+Runs the same analysis and writes a profile skeleton with comments: `input` with the detected encoding, delimiter, header row, sheets and the voted locale; `headers` with an empty `rename` whose comment lists every normalised name, and `drop` for empty columns; one `columns` entry per non-empty column with the guessed type (a type needs 95 % of the non-null values, else `string`), per-column date patterns where they differ from the global ones, and comments with counts, examples and ambiguity notes; `dedupe: {exact: true}`. It adds no validation rules and no missing-value strategies: those are the analyst's decisions. The skeleton is validated before it is written. Default `--out -` (stdout); an existing file needs `--force`, else exit 2. An explicit `--header-row` is kept in the skeleton of a workbook as well. A file without usable columns (no records, or every column empty) is an input error, exit 3. The third of the skeleton's leading comment lines ends with `Reference: docs/profile-reference.md`, a path relative to the repository root; this page links the same file as [profile-reference.md](profile-reference.md).
 
 <!-- run exit=0 -->
 ```bash
@@ -59,7 +59,7 @@ uv run clean-data clean fixtures/01_survey_export_de.csv --profile my-survey.yam
 
 <!-- run exit=2 -->
 ```bash
-# my-survey.yaml exists after the block above; without --force init refuses to replace it
+# profiles/01_survey.yaml exists; without --force init refuses to replace it
 uv run clean-data init fixtures/01_survey_export_de.csv --out profiles/01_survey.yaml
 ```
 
@@ -165,13 +165,13 @@ INFO: missing: 35 cells filled, 0 rows dropped
 INFO: write: 982 rows written to cleaned.csv
 ```
 
-Reports and logs name input files by base name, never by full path. `--explain` adds lines such as:
+Reports and logs name input files by base name, never by full path. `--explain` adds lines such as the following; they go to stderr with the same `INFO: ` prefix as the log lines above, and continuation lines are indented under the block name (the examples are shortened here):
 
 ```text
-[types]    household_income number(decimal=",", thousands=".")  parsed 998 · null 20 · invalid 0
-           r2 "45.000,00" -> 45000.0 · r3 "38.500" -> 38500.0
-[validate] age.max (<= 99)  failed 3 · r118 "130" · r544 "150" · r871 "101"
-[dedupe]   dedupe.key.1 [respondent_id] keep last by completed_at  removed 6 · r40 superseded by r902
+INFO: [types]    household_income number(decimal=",", thousands=".")  parsed 998 · null 20 · invalid 0
+INFO:            r2 "45.000,00" -> 45000.0 · r3 "38.500" -> 38500.0
+INFO: [validate] age.max (<= 99)  failed 3 · r118 "130" · r544 "150" · r871 "101"
+INFO: [dedupe]   dedupe.key.1 [respondent_id] keep last by completed_at  removed 6 · r40 superseded by r902
 ```
 
 `r118` is the source row: the 1-based row of the file with the header counted, which matches Excel's row number and, for single-line records, the line in a text editor.

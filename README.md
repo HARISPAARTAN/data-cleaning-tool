@@ -67,7 +67,7 @@ dedupe: {exact: true, keys: [{columns: [respondent_id], keep: last}]}
 quality: {max_reject_rate: 0.05}
 ```
 
-Every key is described in the [profile reference](docs/profile-reference.md), and [docs/profile.schema.json](docs/profile.schema.json) gives editors completion. The rejects file holds every removed row with `_source_row`, `_stage`, `_rule` and `_detail`, then the raw values as read; the JSON report is described field by field in [docs/report.md](docs/report.md). Fixtures, rejects columns and report sections: [docs/data-model.md](docs/data-model.md).
+Every key is described in the [profile reference](docs/profile-reference.md), and [docs/profile.schema.json](docs/profile.schema.json) gives editors completion. The rejects file holds every removed row with `_source_row`, `_source_sheet` (workbook input only), `_stage`, `_rule` and `_detail`, then the raw values as read; the JSON report is described field by field in [docs/report.md](docs/report.md). Fixtures, rejects columns and report sections: [docs/data-model.md](docs/data-model.md).
 
 ## Getting started
 
