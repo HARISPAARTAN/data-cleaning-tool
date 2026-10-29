@@ -1,0 +1,64 @@
+/* portfolio-kit tokens. Dark is the default; light applies under html[data-theme="light"]. Component rules in base.css read only these. */
+:root{
+  color-scheme:dark;
+  --bg:#0B0F14;
+  --surface:#121820;
+  --surface-2:#182130;
+  --border:#1F2A36;
+  --text:#E6EDF3;
+  --muted:#93A1B0;
+  --accent:#F2A93B;
+  --accent-fg:#1A1200;
+  --ok:#3DDC97;
+  --warn:#FACC15;
+  --danger:#F87171;
+  --info:#5EC8F2;
+  --chart-1:#C38102;
+  --chart-2:#058DB5;
+  --chart-3:#02AB70;
+  --chart-4:#AB6FE5;
+  --chart-5:#CA445C;
+  --chart-6:#77A304;
+  --chart-7:#028E7F;
+  --chart-8:#7A84EF;
+  --font-text:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --font-display:"Space Grotesk","Inter",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono","Cascadia Code",Consolas,"Liberation Mono",monospace;
+  --radius:14px;
+  --radius-sm:8px;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset,0 12px 32px rgba(0,0,0,.35);
+  --space-1:4px;
+  --space-2:8px;
+  --space-3:12px;
+  --space-4:16px;
+  --space-5:24px;
+  --space-6:32px;
+  --space-7:48px;
+  --space-8:64px;
+  --max:1120px;
+  --gutter:max(16px,env(safe-area-inset-left));
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#F7F7F4;
+  --surface:#FFFFFF;
+  --surface-2:#F0EFEA;
+  --border:#DDD9D0;
+  --text:#14181D;
+  --muted:#5B6472;
+  --accent:#B45309;
+  --accent-fg:#FFFFFF;
+  --ok:#15803D;
+  --warn:#A16207;
+  --danger:#B91C1C;
+  --info:#0369A1;
+  --chart-1:#B45309;
+  --chart-2:#0369A1;
+  --chart-3:#15803D;
+  --chart-4:#7E22CE;
+  --chart-5:#EB4960;
+  --chart-6:#3B6201;
+  --chart-7:#00948A;
+  --chart-8:#4338CA;
+  --shadow:0 1px 2px rgba(20,24,29,.06),0 10px 28px rgba(20,24,29,.08);
+}
