@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import datetime as dt
+import io
+import zipfile
 from pathlib import Path
+from xml.etree.ElementTree import ParseError
 
+import openpyxl
 import pytest
 
 from cleandata.core.frame import column, positional
@@ -66,6 +70,13 @@ def test_header_row_auto_and_missing_header(tmp_path: Path) -> None:
         open_source(path, ReadOptions(header_row=9))
 
 
+@pytest.mark.parametrize("text", ["\na,b\n1,2\n", ",\na,b\n1,2\n"], ids=["no-fields", "blank-fields"])
+def test_empty_header_record_is_refused(tmp_path: Path, text: str) -> None:
+    path = write(tmp_path, text)
+    with pytest.raises(InputError, match="header row 1 is empty"):
+        open_source(path, ReadOptions(delimiter=",", header_row=1))
+
+
 def test_undecodable_bytes_give_the_offset(tmp_path: Path) -> None:
     path = tmp_path / "bad.csv"
     path.write_bytes(b"a,b\n" + b"x,y\n" * 10 + b"\xff,z\n")
@@ -80,6 +91,15 @@ def test_chunks_carry_record_ordinals(tmp_path: Path) -> None:
     assert [chunk.read for chunk in chunks] == [2, 2, 1]
     assert [list(chunk.frame.index) for chunk in chunks] == [[0, 1], [2, 3], [4]]
     assert source.info.records == 5
+
+
+def test_chunks_are_single_pass(tmp_path: Path) -> None:
+    source = open_source(write(tmp_path, "a,b\n1,2\n3\n"), ReadOptions(delimiter=","))
+    assert [chunk.read for chunk in source.chunks(None)] == [2]
+    assert source.info.short_records == 1
+    with pytest.raises(RuntimeError, match="can only be iterated once"):
+        source.chunks(None)
+    assert source.info.short_records == 1
 
 
 def test_missing_and_unsupported_files(tmp_path: Path) -> None:
@@ -147,3 +167,33 @@ def test_first_sheet_by_default_and_no_matching_sheet(tmp_path: Path) -> None:
 def test_workbook_header_auto(tmp_path: Path) -> None:
     source, _ = read_all(workbook(tmp_path), header_row="auto", sheets=("Wave 1",))
     assert source.info.sheets[0].header_row == 3
+
+
+def test_blank_workbook_header_row_is_refused(tmp_path: Path) -> None:
+    path = tmp_path / "blank.xlsx"
+    path.write_bytes(write_xlsx([("Data", [[], [("s", "x"), ("n", 1)]])]))
+    with pytest.raises(InputError, match="header row 1 is empty on sheet 'Data'"):
+        open_source(path, ReadOptions(header_row=1))
+
+
+def test_truncated_sheet_part_is_an_input_error(tmp_path: Path) -> None:
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.append(["id", "score"])
+    sheet.append(["a", 1])
+    buffer = io.BytesIO()
+    book.save(buffer)
+    path = tmp_path / "cut.xlsx"
+    with (
+        zipfile.ZipFile(io.BytesIO(buffer.getvalue())) as original,
+        zipfile.ZipFile(path, "w") as damaged,
+    ):
+        for item in original.infolist():
+            data = original.read(item.filename)
+            if item.filename == "xl/worksheets/sheet1.xml":
+                data = data[: len(data) // 2]
+            damaged.writestr(item.filename, data)
+    with pytest.raises(InputError, match="cut.xlsx") as caught:
+        open_source(path, ReadOptions(header_row=1))
+    assert isinstance(caught.value.__cause__, ParseError)

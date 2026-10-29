@@ -14,11 +14,13 @@ import csv
 import fnmatch
 import hashlib
 import zipfile
+import zlib
 from collections import deque
 from collections.abc import Generator, Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Final
+from xml.etree.ElementTree import ParseError
 
 import openpyxl
 import pandas as pd
@@ -137,6 +139,7 @@ class CsvSource:
         self.path = path
         self.options = options
         self.info = info
+        self._consumed = False
         guess = resolve_encoding(path, options.encoding)
         self.encoding = guess.encoding
         info.encoding, info.encoding_method, info.encoding_confidence = (
@@ -167,6 +170,8 @@ class CsvSource:
             number = detect_header_row(head)
         if number is None:
             raise InputError(f"{path.name}: header row {options.header_row} not found")
+        if all(name.strip() == "" for name in head[number - 1]):
+            raise InputError(f"header row {number} is empty")
         self.header_row = number
         info.header_row = number
         self.headers = [name.strip() for name in head[number - 1]]
@@ -194,6 +199,17 @@ class CsvSource:
             raise InputError(f"{self.path.name}: {exc}") from exc
 
     def chunks(self, size: int | None) -> Iterator[RawChunk]:
+        """Yield the records as ``RawChunk`` batches of ``size`` rows (one batch when ``size`` is None).
+
+        A source is single-pass: the ``info`` counters are accumulated while iterating, so a second
+        call raises ``RuntimeError`` rather than counting every record twice.
+        """
+        if self._consumed:
+            raise RuntimeError("chunks() can only be iterated once")
+        self._consumed = True
+        return self._read_chunks(size)
+
+    def _read_chunks(self, size: int | None) -> Iterator[RawChunk]:
         width = len(self.headers)
         names = [positional(i) for i in range(width)] + [META_ROW, META_SHEET]
         footer = self.options.skip_footer_rows
@@ -256,6 +272,7 @@ class WorkbookSource:
         self.path = path
         self.options = options
         self.info = info
+        self._consumed = False
         try:
             book: Any = openpyxl.load_workbook(path, read_only=True, data_only=True)
         except (zipfile.BadZipFile, KeyError, OSError, ValueError) as exc:
@@ -265,9 +282,12 @@ class WorkbookSource:
             selected = self._select(names)
             sheet_rows: dict[str, list[list[object]]] = {}
             for name in selected:
-                worksheet = book[name]
-                worksheet.reset_dimensions()
-                sheet_rows[name] = [_cells(row) for row in worksheet.iter_rows(values_only=True)]
+                try:
+                    worksheet = book[name]
+                    worksheet.reset_dimensions()
+                    sheet_rows[name] = [_cells(row) for row in worksheet.iter_rows(values_only=True)]
+                except (ParseError, zlib.error) as exc:
+                    raise InputError(f"{path.name}: sheet {name!r} is corrupt ({exc})") from exc
         finally:
             book.close()
         info.ignored_sheets = [name for name in names if name not in selected]
@@ -283,6 +303,8 @@ class WorkbookSource:
                 number = detect_header_row(rows)
             if number is None:
                 raise InputError(f"{path.name}: header row {options.header_row} not found on sheet {name!r}")
+            if all(is_blank(value) for value in rows[number - 1]):
+                raise InputError(f"{path.name}: header row {number} is empty on sheet {name!r}")
             header = ["" if value is None else canonical_str(value).strip() for value in rows[number - 1]]
             while header and header[-1] == "":
                 header.pop()
@@ -315,6 +337,16 @@ class WorkbookSource:
         return selected
 
     def chunks(self, size: int | None) -> Iterator[RawChunk]:
+        """Yield every selected sheet's records as one ``RawChunk``; single-pass like ``CsvSource``.
+
+        A second call raises ``RuntimeError`` because the ``info`` counters are accumulated here.
+        """
+        if self._consumed:
+            raise RuntimeError("chunks() can only be iterated once")
+        self._consumed = True
+        return self._read_chunks()
+
+    def _read_chunks(self) -> Iterator[RawChunk]:
         width = len(self.headers)
         names = [positional(i) for i in range(width)] + [META_ROW, META_SHEET]
         rows: list[list[object]] = []
