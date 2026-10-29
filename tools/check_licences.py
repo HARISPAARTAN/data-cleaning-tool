@@ -7,7 +7,9 @@ MIT, BSD-2-Clause, BSD-3-Clause, Apache-2.0, ISC, PSF-2.0 or one of the permissi
 numpy's expression adds for bundled code (0BSD, Zlib, CC0-1.0); a classifier that says only "BSD
 License" counts as BSD. Development-only distributions may also be MPL-2.0. The licence is read from
 ``License-Expression`` (PEP 639), then the ``License`` field, then the classifiers; an expression with
-OR needs one allowed term, one with AND needs all. Exit 0 clean, 1 with findings, 2 when uv fails.
+OR needs one allowed term, one with AND needs all. A classifier the table does not know is kept as
+written, so a FAIL line shows the raw licence text. Exit 0 clean, 1 with findings, 2 when uv fails (its
+error output is printed).
 """
 
 from __future__ import annotations
@@ -16,7 +18,9 @@ import re
 import subprocess
 import sys
 from importlib.metadata import Distribution, distributions
+from pathlib import Path
 
+ROOT = Path(__file__).resolve().parents[1]
 PROJECT = "data-cleaning-tool"
 ALLOWED = {
     "MIT",
@@ -73,9 +77,13 @@ def runtime_names() -> set[str]:
     """The locked runtime closure with every extra, without the dev group and the project itself."""
     command = ["uv", "export", "--locked", "--no-dev", "--all-extras", "--no-hashes", "--no-emit-project"]
     try:
-        out = subprocess.run(command, check=True, capture_output=True, text=True).stdout
+        out = subprocess.run(command, check=True, capture_output=True, text=True, cwd=ROOT).stdout
     except (OSError, subprocess.CalledProcessError) as exc:
-        print(f"check_licences: {' '.join(command)} failed: {exc}", file=sys.stderr)
+        lines = [f"check_licences: {' '.join(command)} failed: {exc}"]
+        detail = (getattr(exc, "stderr", None) or "").strip()
+        if detail:
+            lines.append(detail)
+        print("\n".join(lines), file=sys.stderr)
         raise SystemExit(2) from exc
     names = set()
     for line in out.splitlines():
@@ -111,8 +119,8 @@ def licence_of(dist: Distribution) -> tuple[str, list[str], str]:
     for classifier in meta.get_all("Classifier") or []:
         if classifier.startswith("License ::"):
             name = classifier.rsplit(" :: ", 1)[-1]
-            if name in CLASSIFIER:
-                found.append(CLASSIFIER[name])
+            # a name this table does not know stays as written, so a FAIL line shows the raw licence text
+            found.append(CLASSIFIER.get(name, name))
     return ("OR" if len(found) > 1 else ""), found, "classifier"
 
 

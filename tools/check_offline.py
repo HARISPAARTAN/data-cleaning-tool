@@ -6,7 +6,8 @@ Checked: every .html, .css, .js and .j2 file below web/ and src/cleandata/report
 included). A resource reference is ``src``, ``srcset``, ``poster`` and ``data`` attributes, ``href``
 on ``<link>``, ``url()`` and ``@import`` in CSS and style attributes, and ``import``, ``fetch`` and
 ``new Worker`` targets in scripts. It may not start with ``http:``, ``https:`` or ``//``. Links in
-``<a href>`` are navigation, not requests, and may point anywhere. Exit 0 clean, 1 with findings.
+``<a href>`` are navigation, not requests, and may point anywhere. Exit 0 clean, 1 with findings, and
+also 1 when web/ is missing or no file was found to check.
 """
 
 from __future__ import annotations
@@ -89,7 +90,13 @@ def files() -> list[Path]:
 
 
 def main() -> int:
+    if not (ROOT / "web").is_dir():
+        print("FAIL web/ is missing, so nothing was checked")
+        return 1
     checked = files()
+    if not checked:
+        print("FAIL no .html, .css, .js or .j2 file found, so nothing was checked")
+        return 1
     problems = [f"{path.relative_to(ROOT).as_posix()}: {hit}" for path in checked for hit in findings(path)]
     for problem in problems:
         print(f"FAIL {problem}")

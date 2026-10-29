@@ -3,7 +3,8 @@
   uv run python tools/check_weight.py
 
 The limit applies to the whole of web/, which bounds what any single page can load: the usage page
-with the vendored kit, the self-contained report and the demo files. Exit 0 within the limit, 1 above.
+with the vendored kit, the self-contained report and the demo files. Exit 0 within the limit, 1 above,
+and also 1 when web/ is missing or holds no file.
 """
 
 from __future__ import annotations
@@ -22,7 +23,13 @@ def sizes() -> list[tuple[str, int]]:
 
 
 def main() -> int:
+    if not WEB.is_dir():
+        print("FAIL web/ is missing, so nothing was weighed")
+        return 1
     found = sizes()
+    if not found:
+        print("FAIL web/ holds no file, so nothing was weighed")
+        return 1
     total = sum(size for _, size in found)
     for name, size in found[:10]:
         print(f"{size:>10,}  {name}")
