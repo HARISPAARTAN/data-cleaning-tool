@@ -173,7 +173,21 @@
           "title": "Allowed"
         },
         "missing": {
-          "$ref": "#/$defs/MissingRule"
+          "anyOf": [
+            {
+              "enum": [
+                "keep",
+                "drop",
+                "constant",
+                "median",
+                "ffill"
+              ],
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/MissingRule"
+            }
+          ]
         }
       },
       "required": [

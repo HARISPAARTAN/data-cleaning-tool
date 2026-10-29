@@ -4,12 +4,73 @@ import datetime as dt
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
+import yaml
+from pydantic import ValidationError
 
-from cleandata.core.profile import load_profile, parse_profile, schema
+import export_schema
+from cleandata.core.profile import Locale, Profile, load_profile, parse_profile, schema
+from cleandata.core.text import TextSettings
 from cleandata.errors import ProfileError
 from support import PROFILES, ROOT, profile_of
+
+SCHEMA_FILE = ROOT / "docs" / "profile.schema.json"
+HEAD = "version: 1\nname: t\ncolumns:\n"
+JSON_TYPES: dict[str, tuple[type, ...]] = {
+    "object": (dict,),
+    "array": (list,),
+    "string": (str,),
+    "integer": (int,),
+    "number": (int, float),
+    "boolean": (bool,),
+    "null": (type(None),),
+}
+
+
+def parse_dict(columns: dict[str, object], **sections: object) -> Profile:
+    """``parse_profile`` on a profile written as JSON (which is YAML), so errors carry their paths."""
+    document = {"version": 1, "name": "t", "columns": columns, **sections}
+    return parse_profile(json.dumps(document), "t.yaml")
+
+
+def conforms(value: object, node: dict[str, Any], root: dict[str, Any]) -> bool:
+    """A minimal structural JSON Schema check: $ref, anyOf, type, enum, const, object and array shape."""
+    if "$ref" in node:
+        target: Any = root
+        for part in node["$ref"].removeprefix("#/").split("/"):
+            target = target[part]
+        if not conforms(value, target, root):
+            return False
+    if "anyOf" in node and not any(conforms(value, option, root) for option in node["anyOf"]):
+        return False
+    if "enum" in node and value not in node["enum"]:
+        return False
+    if "const" in node and value != node["const"]:
+        return False
+    kind = node.get("type")
+    if kind is not None:
+        if not isinstance(value, JSON_TYPES[kind]):
+            return False
+        if kind in ("integer", "number") and isinstance(value, bool):
+            return False
+    if isinstance(value, dict):
+        properties = node.get("properties", {})
+        if any(key not in value for key in node.get("required", [])):
+            return False
+        extra = node.get("additionalProperties", True)
+        for key, item in value.items():
+            if key in properties:
+                if not conforms(item, properties[key], root):
+                    return False
+            elif extra is False:
+                return False
+            elif isinstance(extra, dict) and not conforms(item, extra, root):
+                return False
+    if isinstance(value, list) and "items" in node:
+        return all(conforms(item, node["items"], root) for item in value)
+    return True
 
 
 def test_every_shipped_profile_validates() -> None:
@@ -123,3 +184,266 @@ def test_example_profile_in_the_spec_shape() -> None:
         .read_text(encoding="utf-8")
         .startswith("# yaml-language-server: $schema=../docs/profile.schema.json")
     )
+
+
+def test_a_profile_that_is_not_utf8_is_a_profile_error() -> None:
+    umlaut = "\N{LATIN SMALL LETTER A WITH DIAERESIS}"
+    data = f"version: 1\nname: K{umlaut}se\ncolumns:\n  a:\n    type: string\n".encode("cp1252")
+    with pytest.raises(ProfileError, match=r"t\.yaml: the profile must be UTF-8 text \(.+ at byte 18\)"):
+        parse_profile(data, "t.yaml")
+
+
+def test_a_utf8_byte_order_mark_is_accepted() -> None:
+    data = b"\xef\xbb\xbf" + (HEAD + "  a:\n    type: string\n").encode("utf-8")
+    assert list(parse_profile(data).columns) == ["a"]
+
+
+@pytest.mark.parametrize(
+    ("text", "key", "line", "column"),
+    [
+        (HEAD + "  a:\n    type: string\n  a:\n    type: integer\n", "a", 6, 3),
+        (HEAD + "  a:\n    type: string\n    type: integer\n", "type", 6, 5),
+        ("version: 1\nname: t\nname: u\ncolumns:\n  a:\n    type: string\n", "name", 3, 1),
+        (HEAD + "  a:\n    type: string\n    map: {x: y, x: z}\n", "x", 6, 17),
+    ],
+)
+def test_duplicate_yaml_keys_are_rejected_with_their_position(
+    text: str, key: str, line: int, column: int
+) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_profile(text, "t.yaml")
+    message = str(caught.value)
+    assert f"duplicate key '{key}'" in message
+    assert f"invalid YAML at line {line}, column {column}" in message
+
+
+def test_merge_keys_and_anchors_still_work_and_may_be_overridden() -> None:
+    text = (
+        HEAD
+        + "  a: &base\n    type: integer\n    min: 1\n    optional: true\n"
+        + "  b:\n    <<: *base\n    optional: false\n    min: 2\n"
+    )
+    columns = parse_profile(text, "t.yaml").columns
+    assert (columns["b"].type, columns["b"].optional, columns["b"].min) == ("integer", False, 2)
+    assert (columns["a"].type, columns["a"].optional, columns["a"].min) == ("integer", True, 1)
+
+
+def test_a_merged_anchor_with_its_own_overrides_is_not_a_duplicate() -> None:
+    # `input` merges `loc` before `loc` itself is built, so its merged keys must not read as repeats
+    text = (
+        HEAD
+        + '  a:\n    type: number\n    locale: &loc\n      <<: &seed {decimal: ",", thousands: "."}\n'
+        + '      thousands: " "\n'
+        + "input:\n  locale:\n    <<: *loc\n"
+    )
+    profile = parse_profile(text, "t.yaml")
+    assert (profile.input.locale.decimal, profile.input.locale.thousands) == (",", " ")
+    assert profile.effective_locale("a").thousands == " "
+
+
+def test_the_schema_accepts_the_missing_shorthand() -> None:
+    document = schema()
+    missing = document["$defs"]["ColumnRule"]["properties"]["missing"]
+    strategies = {"type": "string", "enum": ["keep", "drop", "constant", "median", "ffill"]}
+    assert any({key: option.get(key) for key in strategies} == strategies for option in missing["anyOf"]), (
+        missing
+    )
+
+    def with_missing(value: object) -> dict[str, object]:
+        return {"version": 1, "name": "t", "columns": {"a": {"type": "number", "missing": value}}}
+
+    for good in ("median", {"strategy": "median"}, {"strategy": "constant", "value": 0}):
+        assert conforms(with_missing(good), document, document), good
+    for bad in ("bogus", {"strategy": "bogus"}, {"strategy": "keep", "extra": 1}, 3):
+        assert not conforms(with_missing(bad), document, document), bad
+
+
+def test_the_schema_validates_every_shipped_profile() -> None:
+    document = json.loads(SCHEMA_FILE.read_text(encoding="utf-8"))
+    shorthand = 0
+    for path in sorted(PROFILES.glob("*.yaml")):
+        loaded = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert conforms(loaded, document, document), path.name
+        shorthand += sum(isinstance(rule.get("missing"), str) for rule in loaded["columns"].values())
+    assert shorthand >= 1  # the survey profile writes `missing: median`
+    typo = {"version": 1, "name": "t", "columns": {"a": {"type": "string", "mx": 1}}}
+    assert not conforms(typo, document, document)
+
+
+def test_default_text_plan_holds_the_empty_token_and_the_text_defaults() -> None:
+    plain = profile_of(
+        {"a": {"type": "string"}}, input={"null_tokens": []}, text={"case": "lower", "trim": False}
+    )
+    plan = plain.default_text_plan()
+    assert "" in plan.null_tokens
+    assert plan.null_tokens == frozenset({""})
+    assert plan.settings == TextSettings(
+        unicode="NFC", trim=False, collapse_whitespace=True, remove_control=True, case="lower"
+    )
+    padded = profile_of({"a": {"type": "string"}}, input={"null_tokens": [" K.A. "]})
+    assert padded.default_text_plan().null_tokens == frozenset({"", "k.a."})
+
+
+def test_locale_settings_trim_and_casefold_the_boolean_sets() -> None:
+    settings = Locale(true_values=[" JA ", "Yes", "WAHR"], false_values=["Nein", " NO\t"]).settings()
+    assert settings.true_values == frozenset({"ja", "yes", "wahr"})
+    assert settings.false_values == frozenset({"nein", "no"})
+
+
+def test_null_tokens_are_trimmed_and_casefolded() -> None:
+    profile = profile_of(
+        {"a": {"type": "string", "null_tokens": [" N/A\t", "-"]}, "b": {"type": "string"}},
+        input={"null_tokens": [" K.A. "]},
+    )
+    plans = profile.column_plans()
+    assert plans["a"].text.null_tokens == frozenset({"", "k.a.", "n/a", "-"})
+    assert plans["b"].text.null_tokens == frozenset({"", "k.a."})
+
+
+@pytest.mark.parametrize(
+    ("base", "override"),
+    [
+        ({"decimal": ",", "thousands": "."}, {"decimal": "."}),
+        ({"decimal": ",", "thousands": "."}, {"thousands": ","}),
+        ({"decimal": "."}, {"thousands": "."}),
+        ({"decimal": ".", "thousands": ","}, {"decimal": ",", "thousands": ","}),
+    ],
+)
+def test_a_column_locale_cannot_make_the_separators_equal(
+    base: dict[str, str], override: dict[str, str]
+) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_dict({"a": {"type": "number", "locale": override}}, input={"locale": base})
+    assert "columns.a.locale: decimal and thousands separators must differ" in str(caught.value)
+
+
+def test_equal_separators_are_rejected_on_the_locale_itself() -> None:
+    with pytest.raises(ValidationError, match="decimal and thousands separators must differ"):
+        Locale(decimal=",", thousands=",")
+    with pytest.raises(ProfileError, match=r"input\.locale: decimal and thousands separators must differ"):
+        parse_dict({"a": {"type": "number"}}, input={"locale": {"decimal": ",", "thousands": ","}})
+    assert Locale(decimal=",", thousands=".").decimal == ","
+
+
+@pytest.mark.parametrize(
+    ("columns", "sections", "path"),
+    [
+        ({"a": {"type": "string", "unicode": "NFD"}}, {}, "columns.a.unicode"),
+        ({"a": {"type": "string"}}, {"text": {"unicode": "NFD"}}, "text.unicode"),
+    ],
+)
+def test_an_unknown_unicode_form_is_rejected(
+    columns: dict[str, object], sections: dict[str, object], path: str
+) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_dict(columns, **sections)
+    assert f"{path}: Input should be 'NFC', 'NFKC' or 'none'" in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    ("columns", "sections", "message"),
+    [
+        (
+            {"a": {"type": "boolean"}},
+            {"input": {"locale": {"true_values": ["ja", "x"], "false_values": [" JA ", "nein"]}}},
+            "input.locale: ['ja'] listed as both true and false",
+        ),
+        (
+            {"a": {"type": "boolean", "locale": {"true_values": ["1", "wahr"], "false_values": ["Wahr"]}}},
+            {},
+            "columns.a.locale: ['wahr'] listed as both true and false",
+        ),
+        (
+            {"a": {"type": "boolean", "locale": {"false_values": ["yes"]}}},
+            {},
+            "columns.a.locale: ['yes'] listed as both true and false",
+        ),
+    ],
+)
+def test_a_boolean_word_cannot_be_both_true_and_false(
+    columns: dict[str, object], sections: dict[str, object], message: str
+) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_dict(columns, **sections)
+    assert message in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    ("sections", "message"),
+    [
+        (
+            {"dedupe": {"keys": [{"columns": ["a"], "order_by": "zzz"}]}},
+            "dedupe.keys.0.order_by: column 'zzz'",
+        ),
+        (
+            {"dedupe": {"fuzzy": {"block_on": ["zzz"], "fields": [{"columns": ["a"]}]}}},
+            "dedupe.fuzzy.block_on: column 'zzz'",
+        ),
+        (
+            {"dedupe": {"fuzzy": {"block_on": ["a"], "fields": [{"columns": ["zzz"]}]}}},
+            "dedupe.fuzzy.fields.0.columns: column 'zzz'",
+        ),
+        ({"output": {"sort_by": ["a", "zzz"]}}, "output.sort_by: column 'zzz'"),
+        ({"report": {"redact": ["zzz"]}}, "report.redact: column 'zzz'"),
+    ],
+)
+def test_unknown_column_references_are_rejected(sections: dict[str, object], message: str) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_dict({"a": {"type": "string"}}, **sections)
+    assert f"{message} is not in columns" in str(caught.value)
+
+
+def test_the_sheet_column_counts_as_a_known_column() -> None:
+    profile = profile_of(
+        {"a": {"type": "string"}},
+        input={"sheet_column": "source_sheet"},
+        output={"sort_by": ["source_sheet"]},
+        report={"redact": ["source_sheet"]},
+    )
+    assert profile.output.sort_by == ["source_sheet"]
+
+
+@pytest.mark.parametrize(
+    "rule",
+    [
+        {"type": "integer", "min": 5, "max": 1},
+        {"type": "number", "min": "2.5", "max": 2},
+        {"type": "date", "min": "2025-02-01", "max": "2025-01-01"},
+        {"type": "datetime", "min": "2025-01-01T10:00:00", "max": "2025-01-01T09:00:00"},
+    ],
+)
+def test_a_maximum_below_the_minimum_is_rejected(rule: dict[str, object]) -> None:
+    with pytest.raises(ProfileError) as caught:
+        parse_dict({"a": rule})
+    assert "columns.a.max: must not be below min" in str(caught.value)
+
+
+def test_bounds_that_cannot_be_compared_are_a_profile_error() -> None:
+    rule = {"type": "datetime", "min": "2025-01-01T10:00:00+01:00", "max": "2025-01-02T10:00:00"}
+    with pytest.raises(ProfileError, match=r"columns\.a\.max: cannot be compared with min"):
+        parse_dict({"a": rule})
+
+
+def test_equal_bounds_are_allowed() -> None:
+    plan = profile_of({"a": {"type": "integer", "min": 3, "max": 3}}).column_plans()["a"]
+    assert (plan.min, plan.max) == (3, 3)
+
+
+def test_the_schema_exporter_is_current_and_byte_identical(capsys: pytest.CaptureFixture[str]) -> None:
+    assert export_schema.main(["--check"]) == 0
+    assert "is current" in capsys.readouterr().err
+    assert export_schema.render().encode("utf-8") == SCHEMA_FILE.read_bytes()
+
+
+def test_the_schema_exporter_writes_and_flags_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    target = tmp_path / "docs" / "profile.schema.json"
+    monkeypatch.setattr(export_schema, "TARGET", target)
+    assert export_schema.main(["--check"]) == 1
+    assert export_schema.main([]) == 0
+    assert target.read_bytes() == SCHEMA_FILE.read_bytes()
+    assert export_schema.main(["--check"]) == 0
+    target.write_text("{}\n", encoding="utf-8")
+    assert export_schema.main(["--check"]) == 1
+    assert "out of date" in capsys.readouterr().err

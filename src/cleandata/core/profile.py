@@ -11,9 +11,10 @@ import codecs
 import datetime as dt
 import re
 import warnings
+from collections.abc import Hashable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self
+from typing import Annotated, Any, Literal, Self, get_args
 
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
@@ -49,6 +50,12 @@ class Locale(_Model):
     )
     true_values: list[str] = Field(default_factory=lambda: ["true", "yes", "y", "1"], min_length=1)
     false_values: list[str] = Field(default_factory=lambda: ["false", "no", "n", "0"], min_length=1)
+
+    @model_validator(mode="after")
+    def _separators_differ(self) -> Self:
+        if self.thousands == self.decimal:
+            raise ValueError("decimal and thousands separators must differ")
+        return self
 
     def settings(self) -> ParseSettings:
         return ParseSettings(
@@ -129,6 +136,11 @@ class MissingRule(_Model):
     value: Any = None
 
 
+def _missing_schema(schema: dict[str, Any]) -> None:
+    """``missing`` also takes the bare strategy name (``missing: median``); the schema says so."""
+    schema["anyOf"] = [{"type": "string", "enum": list(get_args(Strategy))}, {"$ref": schema.pop("$ref")}]
+
+
 class ColumnRule(_Model):
     type: ColumnType
     optional: bool = False
@@ -147,7 +159,7 @@ class ColumnRule(_Model):
     max: Any = None
     regex: str | None = None
     allowed: list[Any] | None = Field(default=None, min_length=1)
-    missing: MissingRule = Field(default_factory=MissingRule)
+    missing: MissingRule = Field(default_factory=MissingRule, json_schema_extra=_missing_schema)
 
     @field_validator("missing", mode="before")
     @classmethod
@@ -325,8 +337,6 @@ class Profile(_Model):
     @staticmethod
     def _locale_problems(path: str, locale: Locale) -> list[str]:
         problems: list[str] = []
-        if locale.thousands == locale.decimal:
-            problems.append(f"{path}: decimal and thousands separators must differ")
         for pattern in locale.date_formats:
             problem = _pattern_problem(pattern, "date")
             if problem:
@@ -348,9 +358,10 @@ class Profile(_Model):
             try:
                 resolved = rule.locale.resolve(self.input.locale)
             except ValidationError as exc:
-                problems.append(f"{path}.locale: {exc.errors()[0]['msg']}")
+                problems.append(f"{path}.locale: {str(exc.errors()[0]['msg']).removeprefix('Value error, ')}")
             else:
                 problems.extend(self._locale_problems(f"{path}.locale", resolved))
+        bounds: dict[str, Any] = {}
         for key in ("min", "max"):
             value = getattr(rule, key)
             if value is None:
@@ -359,9 +370,15 @@ class Profile(_Model):
                 problems.append(f"{path}.{key}: only integer, number, date and datetime columns have bounds")
                 continue
             try:
-                coerce_literal(value, rule.type)
+                bounds[key] = coerce_literal(value, rule.type)
             except ValueError as exc:
                 problems.append(f"{path}.{key}: {exc}")
+        if len(bounds) == 2:
+            try:
+                if bounds["max"] < bounds["min"]:
+                    problems.append(f"{path}.max: must not be below min")
+            except TypeError as exc:  # a naive and a timezone-aware datetime
+                problems.append(f"{path}.max: cannot be compared with min ({exc})")
         for index, value in enumerate(rule.allowed or []):
             try:
                 coerce_literal(value, rule.type)
@@ -513,11 +530,52 @@ def format_validation_error(exc: ValidationError, source: str) -> str:
     return "\n".join(lines)
 
 
+class _UniqueKeyLoader(yaml.SafeLoader):
+    """``yaml.safe_load`` that refuses a repeated mapping key (PyYAML silently keeps the last one).
+
+    Every mapping passes through ``flatten_mapping`` before it is built, and the check runs there, on
+    the keys as written, once per mapping: after a ``<<`` merge the explicit keys that override merged
+    ones would look like repeats. Merge keys and anchors otherwise behave as in ``safe_load``.
+    """
+
+    def __init__(self, stream: str) -> None:
+        super().__init__(stream)
+        self._checked: set[int] = set()
+
+    def flatten_mapping(self, node: yaml.MappingNode) -> None:
+        if id(node) not in self._checked:
+            self._checked.add(id(node))
+            seen: set[Hashable] = set()
+            for key_node, _ in node.value:
+                if key_node.tag == "tag:yaml.org,2002:merge":
+                    continue
+                key = self.construct_object(key_node, deep=True)
+                if not isinstance(key, Hashable):
+                    continue  # the constructor reports an unhashable key itself
+                if key in seen:
+                    raise yaml.constructor.ConstructorError(
+                        "while constructing a mapping",
+                        node.start_mark,
+                        f"duplicate key {key!r}",
+                        key_node.start_mark,
+                    )
+                seen.add(key)
+        super().flatten_mapping(node)
+
+
 def parse_profile(data: bytes | str, source: str = "profile") -> Profile:
     """Validate YAML text; every problem is reported with its path."""
-    text = data.decode("utf-8-sig") if isinstance(data, bytes) else data
+    if isinstance(data, bytes):
+        try:
+            text = data.decode("utf-8-sig")
+        except UnicodeDecodeError as exc:
+            raise ProfileError(
+                f"{source}: the profile must be UTF-8 text ({exc.reason} at byte {exc.start})"
+            ) from exc
+    else:
+        text = data
     try:
-        loaded = yaml.safe_load(text)
+        loaded = yaml.load(text, Loader=_UniqueKeyLoader)
     except yaml.YAMLError as exc:
         mark = getattr(exc, "problem_mark", None)
         where = f" at line {mark.line + 1}, column {mark.column + 1}" if mark is not None else ""
