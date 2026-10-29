@@ -1,0 +1,54 @@
+# Profile skeleton from clean-data init {{ version }} for {{ info.name }}.
+# Review every column. Validation rules (required, min, max, regex, allowed) and missing-value
+# strategies are not guessed: add them where the data needs them. Reference: docs/profile-reference.md
+version: 1
+name: {{ name | q }}
+description: {{ ("Skeleton generated from " ~ info.name) | q }}
+input:
+{% if info.kind == "csv" %}
+  encoding: {{ info.encoding | q }}{% if info.encoding_method in ("detected", "western") %}  # detected, confidence {{ info.encoding_confidence }}; check it{% else %}  # {{ info.encoding_method }}{% endif %}
+
+  delimiter: {{ (info.delimiter or ",") | q }}{% if info.delimiter is none %}  # no delimiter found; the file reads as one column{% endif %}
+
+{% endif %}
+  header_row: {{ header_row | q }}
+{% if sheets %}
+  sheets: {{ sheets | q }}
+{% for name, header, records in analysis.all_sheets if name not in sheets %}
+  # not selected: {{ name | q }} (header {{ header if header is not none else "not found" }}, {{ records }} records)
+{% endfor %}
+{% endif %}
+{% if sheet_column %}
+  sheet_column: {{ sheet_column | q }}
+{% endif %}
+  null_tokens: {{ null_tokens | q }}
+  locale:
+    decimal: {{ decimal | q }}
+    thousands: {{ thousands | q }}
+    date_formats: {{ date_formats | q }}
+    datetime_formats: {{ datetime_formats | q }}
+headers:
+  normalise: snake_case
+  # Normalised input names: {{ normalised | join(", ") }}
+  # rename maps a normalised name to the output name, e.g. {old_name: new_name}
+  rename: {}
+{% if drop %}
+  drop: {{ drop | q }}  # empty in the analysed records
+{% endif %}
+columns:
+{% for column in columns %}
+  {{ column.name | key }}:
+    type: {{ column.type }}
+{% if column.strip %}
+    strip: {{ column.strip | q }}
+{% endif %}
+{% if column.locale %}
+    locale: {% raw %}{{% endraw %}{% for name, value in column.locale.items() %}{{ name }}: {{ value | q }}{{ ", " if not loop.last }}{% endfor %}{% raw %}}{% endraw %}
+
+{% endif %}
+{% for line in column.comments %}
+    # {{ line }}
+{% endfor %}
+{% endfor %}
+dedupe:
+  exact: true
