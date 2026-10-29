@@ -12,3 +12,4 @@ out/
 my-survey.yaml
 .kit/
 *.log
+fixtures/05_panel_large.csv
