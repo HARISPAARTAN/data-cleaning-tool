@@ -10,9 +10,11 @@ cp1252 (same chaos and coherence); a tie resolves to the Western reading. A dete
 ``coherence / (1 + equally ranked alternatives)`` as its confidence; BOM, UTF-8 and given results carry
 none. Delimiter: per candidate the share of the first 50 records (first 64 KiB) with the modal field
 count; shares within ``SHARE_TOLERANCE`` of the best count as equal, then more fields win, then candidate
-order, and the first record must have the modal count. Header row ``auto``: the first of the first 20
-records whose non-empty cell count is the maximum among them and whose non-empty cells are all text that
-is neither a number nor a date.
+order. A candidate whose first record has the modal count is preferred; when none has it, the best
+candidate whose first record still holds the delimiter (at least ``MIN_FIELDS`` fields) is kept, so a
+ragged file keeps its delimiter while a single-column header vetoes it. Header row ``auto``: the first
+of the first 20 records whose non-empty cell count is the maximum among them and whose non-empty cells
+are all text that is neither a number nor a date.
 """
 
 from __future__ import annotations
@@ -271,13 +273,18 @@ def sniff_delimiter(text: str, quotechar: str = '"') -> DelimiterGuess:
         if modal < MIN_FIELDS:
             continue
         pool.append(_Candidate(candidate, order, frequency / len(counts), modal, counts[0]))
+    fallback: _Candidate | None = None
     while pool:
         top = max(c.share for c in pool)
         close = [c for c in pool if top - c.share <= SHARE_TOLERANCE + 1e-9]
         winner = max(close, key=lambda c: (c.fields, -c.order))
         if winner.first == winner.fields:
             return DelimiterGuess(winner.delimiter, round(winner.share, 6), winner.fields)
+        if fallback is None and winner.first >= MIN_FIELDS:
+            fallback = winner
         pool.remove(winner)
+    if fallback is not None:
+        return DelimiterGuess(fallback.delimiter, round(fallback.share, 6), fallback.fields)
     return DelimiterGuess(None, 0.0, 1)
 
 

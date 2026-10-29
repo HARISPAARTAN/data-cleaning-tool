@@ -538,11 +538,23 @@ def test_a_better_share_beyond_the_tolerance_wins_over_more_fields() -> None:
     assert (guess.delimiter, guess.fields, guess.share) == (",", 2, 1.0)
 
 
-def test_the_first_record_must_have_the_modal_field_count() -> None:
+def test_a_candidate_whose_first_record_has_the_modal_count_is_preferred() -> None:
     # `;` is modal with 4 fields, but the first record has 1, so the next candidate (`,`) is taken
     text = "a,b\n" + "1;2,5;3;4\n" * 20
     guess = sniff_delimiter(text)
     assert (guess.delimiter, guess.fields, guess.share) == (",", 2, 1.0)
+
+
+def test_a_ragged_file_whose_first_record_is_not_modal_keeps_its_delimiter() -> None:
+    # the records have 3, 2, 5 and 4 fields, so every count is equally frequent and the header is not modal
+    guess = sniff_delimiter("a,b,c\n1,2\n1,2,3,,\n1,2,3,4\n")
+    assert (guess.delimiter, guess.fields, guess.share) == (",", 5, 0.25)
+
+
+def test_a_first_record_without_the_delimiter_still_vetoes_the_candidate() -> None:
+    # `;` is modal with 3 fields, but the header is a single column: the file has no delimiter
+    guess = sniff_delimiter("name\n" + "1;2;3\n" * 10)
+    assert (guess.delimiter, guess.share, guess.fields) == (None, 0.0, 1)
 
 
 def test_thousands_formatted_single_column_numbers_have_no_delimiter() -> None:
