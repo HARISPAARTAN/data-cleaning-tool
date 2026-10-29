@@ -373,6 +373,12 @@ class Profile(_Model):
                 bounds[key] = coerce_literal(value, rule.type)
             except ValueError as exc:
                 problems.append(f"{path}.{key}: {exc}")
+                continue
+            if rule.type == "datetime" and bounds[key].tzinfo is not None:
+                problems.append(
+                    f"{path}.{key}: must be a naive datetime (no timezone); "
+                    "cells are compared without timezone"
+                )
         if len(bounds) == 2:
             try:
                 if bounds["max"] < bounds["min"]:

@@ -424,6 +424,19 @@ def test_bounds_that_cannot_be_compared_are_a_profile_error() -> None:
         parse_dict({"a": rule})
 
 
+@pytest.mark.parametrize("key", ["min", "max"])
+def test_an_aware_datetime_bound_is_a_profile_error(key: str) -> None:
+    rule = {"type": "datetime", key: "2025-01-01T10:00:00Z"}
+    with pytest.raises(ProfileError, match=rf"columns\.a\.{key}: must be a naive datetime"):
+        parse_dict({"a": rule})
+
+
+def test_a_naive_datetime_bound_validates() -> None:
+    rule = {"type": "datetime", "min": "2025-01-01T10:00:00", "max": "2025-01-02T10:00:00"}
+    plan = profile_of({"a": rule}).column_plans()["a"]
+    assert (plan.min, plan.max) == (dt.datetime(2025, 1, 1, 10), dt.datetime(2025, 1, 2, 10))
+
+
 def test_equal_bounds_are_allowed() -> None:
     plan = profile_of({"a": {"type": "integer", "min": 3, "max": 3}}).column_plans()["a"]
     assert (plan.min, plan.max) == (3, 3)
