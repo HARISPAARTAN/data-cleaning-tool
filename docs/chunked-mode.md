@@ -41,7 +41,7 @@ ERROR: the profile cannot run with --chunked:
   columns.satisfaction.missing: median needs the whole column; use a constant
 ```
 
-`--explain` lists the same reasons in its plan. `profiles/05_large.yaml` is an example of a chunk-compatible profile: no fuzzy section, the key rule keeps the first row without `order_by`, and points are filled with a constant.
+The usage error comes before any `--explain` output, so `--explain` never repeats these reasons; on a chunk-compatible profile its plan ends with one `[chunked]` line that names the operations that are not available. `profiles/05_large.yaml` is an example of a chunk-compatible profile: no fuzzy section, the key rule keeps the first row without `order_by`, and points are filled with a constant.
 
 ## Reports in chunked mode
 

@@ -1,4 +1,4 @@
-"""One test per stage contract (docs/architecture.md, table "Pipeline stages"), plus row accounting."""
+"""One test per stage contract (docs/architecture.md, table "Stages"), plus row accounting."""
 
 from __future__ import annotations
 

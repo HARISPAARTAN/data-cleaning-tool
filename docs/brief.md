@@ -10,7 +10,7 @@ Rebuilt from memory as a demo. The original client's name and data are not used.
 
 ## Goal
 
-One command-line tool that turns inconsistent survey exports and partner files into clean, typed, de-duplicated tables, driven by a YAML profile the client can read and edit. Every removed row lands in a rejects file with its reason, every change is summarised in an HTML and a JSON report, and the same input with the same profile gives byte-identical CSV output on Windows and Linux. Rules only: no learned models, nothing guessed.
+One command-line tool that turns inconsistent survey exports and partner files into clean, typed, de-duplicated tables, driven by a YAML profile the client can read and edit. Every removed row lands in a rejects file with its reason, every change is summarised in an HTML and a JSON report, and the same input with the same profile gives byte-identical CSV output on Windows and Linux. Rules only: no learned models, no value is guessed.
 
 ## Users and roles
 

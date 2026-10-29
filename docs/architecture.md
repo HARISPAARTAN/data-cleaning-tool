@@ -41,7 +41,7 @@ src/cleandata/
 
 ## Stages
 
-Each stage in `core` is a pure function `(frame, context) -> (frame, events)`. The events (rejects, fills, coercion counts, examples, warnings) feed `ledger.py` (row accounting and the rejects collector), `stats.py` and the explain log (its own logger, so `--explain` prints to stderr even under `--quiet`). One test per stage asserts its contract from this table.
+Stages 3 to 7 are functions `(frame, context) -> (frame, events)`, listed in `STAGES` in `pipeline.py`; stages 6 and 7 also update the state that is carried from chunk to chunk (the digest sets, the last `ffill` values). Stage 1 is a generator that yields raw chunks (`chunks()` of the CSV and workbook sources in `reader.py`), stage 2 has its own signature (`structure_stage(frame, header plan, width, drop_empty_rows)`) and stage 8 writes through the sinks of `writer.py`. The events (rejects, fills, coercion counts, examples, warnings) feed `ledger.py` (row accounting and the rejects collector), `stats.py` and the explain log (its own logger, so `--explain` prints to stderr even under `--quiet`). One test per stage asserts its contract from this table.
 
 | # | Stage | Does | May change | Must not change |
 |---|---|---|---|---|

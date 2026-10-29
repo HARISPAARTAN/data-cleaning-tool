@@ -80,7 +80,7 @@
   <text class="s" x="1117" y="142" text-anchor="middle">CSV · XLSX · Parquet</text>
   <rect class="box" x="1014" y="182" width="206" height="64" rx="10"/>
   <text class="t" x="1117" y="208" text-anchor="middle">Rejects</text>
-  <text class="s" x="1117" y="228" text-anchor="middle">every removed row with its reason</text>
+  <text class="s" x="1117" y="228" text-anchor="middle">removed rows with reasons</text>
   <path class="line" d="M976,166 H995 V128 H1012" marker-end="url(#arrow)"/>
   <path class="line" d="M976,184 H995 V214 H1012" marker-end="url(#arrow)"/>
 

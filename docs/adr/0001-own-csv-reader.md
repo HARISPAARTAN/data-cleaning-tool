@@ -5,7 +5,7 @@
 
 ## Context
 
-Every reject, example and explain line must name the row a person finds in the file: the physical row with the header counted, which is Excel's row number and, for single-line records, the editor's line number. Quoted fields may span lines, records may be short or long, header rows sit below title blocks and footer rows must be skipped. Chunked mode must behave exactly like an in-memory run. `pandas.read_csv` infers types unless told otherwise, reports bad lines through a callback without a uniform policy across engines, and its chunked reader numbers rows per chunk.
+Every reject, example and explain line must name the row a person finds in the file: the physical row with the header counted, which is Excel's row number and, for single-line records, the editor's line number. Quoted fields may span lines, records may be short or long, header rows sit below title blocks and footer rows must be skipped. Chunked mode must behave exactly like an in-memory run. `pandas.read_csv` infers types unless told otherwise, reports bad lines through a callback without a uniform policy across engines, and its chunked reader keeps one continuous index but counts parsed records, not physical lines, so a quoted field that spans lines or a skipped blank line shifts every later number and `_source_row` cannot be derived from it.
 
 ## Decision
 
