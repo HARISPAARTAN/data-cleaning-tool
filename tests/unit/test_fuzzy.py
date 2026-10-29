@@ -49,6 +49,14 @@ def test_null_fields_are_left_out_and_weights_renormalised() -> None:
     assert found.scores == {(0, 1): 97.5}
 
 
+def test_float_noise_in_the_weighted_mean_does_not_miss_an_inclusive_threshold() -> None:
+    fields = [{"columns": ["first"], "weight": 0.1}, {"columns": ["last"], "weight": 0.2}]
+    rows = [["x", "johanneson", "johanneson"], ["x", "johannesen", "johannesen"]]
+    found = find_clusters(frame(rows), [0, 1], rule(fields=fields))
+    assert found.scores == {(0, 1): 90.0}
+    assert found.clusters == [[0, 1]]
+
+
 def test_no_comparable_field_means_no_match() -> None:
     rows = [["x", None, None], ["x", None, None]]
     assert find_clusters(frame(rows), [0, 1], rule()).clusters == []
@@ -85,12 +93,17 @@ def test_matches_join_transitively_with_stable_ids() -> None:
     assert found.clusters == [[0, 2, 4], [1, 3]]
 
 
-def run(rows: list[list[object]], action: str):
+def run(rows: list[list[object]], action: str, threshold: float = 90):
     profile = profile_of(
         COLUMNS,
         dedupe={
             "exact": False,
-            "fuzzy": {"block_on": ["block"], "fields": [{"columns": ["first"]}], "action": action},
+            "fuzzy": {
+                "block_on": ["block"],
+                "fields": [{"columns": ["first"]}],
+                "threshold": threshold,
+                "action": action,
+            },
         },
     )
     data = frame(rows)
@@ -110,4 +123,22 @@ def test_remove_sends_later_members_to_the_rejects() -> None:
     rows = [["x", "christophe", None], ["x", "christophs", None]]
     result, events = run(rows, "remove")
     assert column(result, "_source_row") == [2]
-    assert [(r.rule, r.detail) for r in events.rejects] == [("dedupe.fuzzy", "matches r2, score 90.0")]
+    assert [(r.rule, r.detail) for r in events.rejects] == [
+        ("dedupe.fuzzy", "matches r2, score 90.0; kept r2")
+    ]
+
+
+def test_remove_in_a_chain_names_the_best_partner_and_the_kept_row() -> None:
+    rows = [["x", "abcdefghij", None], ["x", "abcdefghxy", None], ["x", "abcdefgwxy", None]]
+    found = find_clusters(frame(rows), [0, 1, 2], rule(threshold=75))
+    assert found.scores == {(0, 1): 80.0, (1, 2): 90.0}
+    result, events = run(rows, "remove", threshold=75)
+    assert column(result, "_source_row") == [2]
+    assert [(r.source_row, r.detail) for r in events.rejects] == [
+        (3, "matches r4, score 90.0; kept r2"),
+        (4, "matches r3, score 90.0; kept r2"),
+    ]
+    assert events.rules[0].examples == [
+        "r3 matches r4, score 90.0; kept r2",
+        "r4 matches r3, score 90.0; kept r2",
+    ]

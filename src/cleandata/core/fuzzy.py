@@ -4,8 +4,9 @@ Pairs are compared only within a block (equal ``block_on`` values; nulls never b
 field the scorer compares the casefolded, accent-folded, whitespace-collapsed join of its columns;
 rapidfuzz scores 0 to 100 per block through ``process.cdist`` without ``score_cutoff`` (a cutoff would
 zero field scores and distort the mean). The pair score is the weighted mean of the field scores,
-leaving out fields with a null on either side; a match needs ``score >= threshold``. Matches join
-transitively into clusters, ordered by their first member in source order.
+leaving out fields with a null on either side, rounded to nine decimals so float noise cannot miss
+an inclusive threshold; a match needs ``score >= threshold``. Matches join transitively into
+clusters, ordered by their first member in source order.
 """
 
 from __future__ import annotations
@@ -53,18 +54,30 @@ class FuzzyResult:
     compared: int = 0
     skipped: list[tuple[str, int]] = field(default_factory=list)
 
-    def partner(self, member: int) -> tuple[int, float]:
-        """The highest-scoring direct match of ``member`` (ties: the earliest row)."""
-        best: tuple[float, int] | None = None
+    def partners(self) -> dict[int, tuple[int, float]]:
+        """Every matched row's highest-scoring direct match (ties: the earliest row), in one pass."""
+        best: dict[int, tuple[float, int]] = {}
         for (a, b), score in self.scores.items():
-            if member not in (a, b):
-                continue
-            other = b if a == member else a
-            if best is None or score > best[0] or (score == best[0] and other < best[1]):
-                best = (score, other)
-        if best is None:
-            raise ValueError(f"row {member} has no match")
-        return best[1], best[0]
+            for member, other in ((a, b), (b, a)):
+                current = best.get(member)
+                if current is None or score > current[0] or (score == current[0] and other < current[1]):
+                    best[member] = (score, other)
+        return {member: (other, score) for member, (score, other) in best.items()}
+
+    def partner(self, member: int) -> tuple[int, float]:
+        """The highest-scoring direct match of ``member``; loops over many rows use ``partners()``."""
+        try:
+            return self.partners()[member]
+        except KeyError:
+            raise ValueError(f"row {member} has no match") from None
+
+    def cluster_pairs(self) -> list[list[tuple[int, int, float]]]:
+        """The scored pairs of each cluster, parallel to ``clusters`` and sorted, from one pass."""
+        index = {member: number for number, members in enumerate(self.clusters) for member in members}
+        grouped: list[list[tuple[int, int, float]]] = [[] for _ in self.clusters]
+        for (a, b), score in sorted(self.scores.items()):
+            grouped[index[a]].append((a, b, score))
+        return grouped
 
 
 def field_texts(frame: pd.DataFrame, columns: Sequence[str]) -> list[str | None]:
@@ -121,7 +134,7 @@ def find_clusters(frame: pd.DataFrame, positions: Sequence[int], rule: FuzzyRule
             total = total + numpy.where(mask, scores * item.weight, 0.0)
             weight = weight + numpy.where(mask, item.weight, 0.0)
         safe = numpy.where(weight > 0, weight, 1.0)
-        pair = numpy.where(weight > 0, total / safe, -1.0)
+        pair = numpy.round(numpy.where(weight > 0, total / safe, -1.0), 9)
         matches = numpy.triu(pair >= rule.threshold, k=1)
         for i, j in zip(*numpy.nonzero(matches), strict=True):
             a, b = members[int(i)], members[int(j)]

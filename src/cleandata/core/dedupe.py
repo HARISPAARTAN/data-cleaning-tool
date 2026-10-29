@@ -154,13 +154,11 @@ def dedupe_stage(frame: pd.DataFrame, ctx: StageContext) -> tuple[pd.DataFrame, 
                 )
             )
         cluster_values = [None] * count
-        for number, members in enumerate(found.clusters, start=1):
+        grouped = found.cluster_pairs()
+        partners = found.partners() if fuzzy.action == "remove" else {}
+        for number, (members, scored) in enumerate(zip(found.clusters, grouped, strict=True), start=1):
             cluster_id = f"f{number:04d}"
-            pairs = [
-                (labels[a], labels[b], round(score, 6))
-                for (a, b), score in sorted(found.scores.items())
-                if a in members and b in members
-            ]
+            pairs = [(labels[a], labels[b], round(score, 6)) for a, b, score in scored]
             events.clusters.append(
                 Cluster(
                     cluster_id,
@@ -173,16 +171,13 @@ def dedupe_stage(frame: pd.DataFrame, ctx: StageContext) -> tuple[pd.DataFrame, 
                 cluster_values[position] = cluster_id
             if fuzzy.action == "remove":
                 for position in members[1:]:
-                    partner, score = found.partner(position)
+                    partner, score = partners[position]
+                    detail = f"matches {labels[partner]}, score {score:.1f}; kept {labels[members[0]]}"
                     keep[position] = False
                     tally.failed += 1
-                    removed.append(
-                        (position, "dedupe.fuzzy", f"matches {labels[partner]}, score {score:.1f}")
-                    )
+                    removed.append((position, "dedupe.fuzzy", detail))
                     if len(tally.examples) < ctx.limit:
-                        tally.examples.append(
-                            f"{labels[position]} matches {labels[partner]}, score {score:.1f}"
-                        )
+                        tally.examples.append(f"{labels[position]} {detail}")
             elif len(tally.examples) < ctx.limit:
                 tally.examples.append(f"{cluster_id}: " + ", ".join(labels[p] for p in members))
         events.rules.append(tally)
