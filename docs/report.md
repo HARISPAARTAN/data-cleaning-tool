@@ -25,7 +25,7 @@ Top-level keys, in this order:
 | `rules` | One entry per validation rule: `id` (`age.max`), `kind`, `column`, `parameters`, `checked`, `failed` and up to `report.examples_per_rule` `examples` such as `r118 "130"`. A row can fail several rules, so the counts can add up to more than the rejected rows. |
 | `dedupe` | `exact` (`checked`, `removed`, or `null` when off), `keys` (per rule: `id`, `columns`, `keep`, `order_by`, `checked`, `removed`) and `fuzzy` (see below, or `null`). |
 | `rejects` | `file` (base name or `null`), `rows`, `by_stage` (`read`, `validate`, `dedupe`, `missing`), `by_rule`, `by_column` and `preview`: the first `report.preview_rows` rejects rows with `source_row`, `source_sheet` (workbook input only), `stage`, `rule`, `detail` and the raw `values`. |
-| `warnings` | Notices that `--strict` turns into exit 4: `code`, `message` and `count`. |
+| `warnings` | Notices that `--strict` turns into exit 4: `code`, `message` and `count`. Read codes include `read.short_record` (short records padded with nulls) and `read.unterminated_quote` (a quoted field is still open at the end of the file, so the rest of the file was read into it; the message names the line where it started). |
 | `notes` | Informational notices (empty columns dropped, repeated headers numbered, sheets not matched). |
 | `explain` | With `--explain`: the lines of the explain log; else `null`. |
 | `banner`, `footer` | `report.banner` and `report.footer` of the profile, or `null`. |

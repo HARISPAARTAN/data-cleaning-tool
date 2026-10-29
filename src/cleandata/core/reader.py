@@ -95,6 +95,7 @@ class SourceInfo:
     footer_skipped: int = 0
     short_records: int = 0
     malformed: int = 0
+    unterminated_quote_line: int | None = None
 
 
 @dataclass
@@ -114,6 +115,62 @@ def file_digest(path: Path) -> tuple[int, str]:
             digest.update(block)
             size += len(block)
     return size, digest.hexdigest()
+
+
+def unterminated_quote_line(
+    first_line: int, lines: Sequence[str], delimiter: str, quotechar: str
+) -> int | None:
+    """The line where a quoted field starts that is still open at the end of ``lines``, or None.
+
+    ``lines`` are the physical lines of the last record of a file. ``csv.reader`` accepts a quoted field
+    that is open at the end of the file without a word and hands back everything after the opening quote
+    as one field. This follows the module's own states (a quote opens a field only at its start, a
+    doubled quote inside a quoted field is a literal quote, any other quote is plain text) to see
+    whether the record ends inside quotes.
+    """
+    text = "".join(lines)
+    quoted = False  # inside a quoted field
+    closing = False  # just after a quote inside a quoted field
+    field_start = True  # at the start of a field
+    opened = 0
+    position, end = 0, len(text)
+    while position < end:
+        char = text[position]
+        if quoted:
+            found = text.find(quotechar, position)
+            if found < 0:
+                break
+            quoted, closing = False, True
+            position = found + 1
+            continue
+        if closing:
+            if char == quotechar:  # a doubled quote: still the same field
+                quoted, closing = True, False
+            elif char == delimiter:
+                closing, field_start = False, True
+            elif char in "\r\n":
+                return None
+            else:
+                closing = False
+            position += 1
+            continue
+        if char in "\r\n":
+            return None
+        if char == delimiter:
+            field_start = True
+        elif field_start and char == quotechar:
+            quoted, field_start, opened = True, False, position
+        else:
+            field_start = False
+        position += 1
+    if not quoted:
+        return None
+    seen = 0
+    for number, line in enumerate(lines):
+        seen += len(line)
+        if opened < seen:
+            return first_line + number
+    return first_line  # pragma: no cover - the opening quote is inside one of the lines
 
 
 class _LineCounter:
@@ -184,11 +241,19 @@ class CsvSource:
                 reader = csv.reader(
                     counter, delimiter=self.delimiter, quotechar=self.options.quotechar, strict=False
                 )
+                last: tuple[int, list[str]] | None = None
                 for fields in reader:
                     start = counter.line - len(counter.buffer) + 1
-                    raw = "".join(counter.buffer)
-                    counter.buffer.clear()
-                    yield start, fields, raw
+                    lines = counter.buffer
+                    counter.buffer = []
+                    last = (start, lines)
+                    yield start, fields, "".join(lines)
+                # only reached when the file was read to its end (a closed generator never gets here)
+                self.info.unterminated_quote_line = (
+                    None
+                    if last is None
+                    else unterminated_quote_line(*last, self.delimiter, self.options.quotechar)
+                )
         except UnicodeDecodeError as exc:
             offset = find_decode_error(self.path, self.encoding)
             raise InputError(

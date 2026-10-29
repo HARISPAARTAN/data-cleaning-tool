@@ -467,6 +467,12 @@ def run_clean(
                 raws.append(raw)
         if info.short_records:
             ledger.notice("read.short_record", "short records padded with nulls", info.short_records)
+        if info.unterminated_quote_line is not None:
+            ledger.notice(
+                "read.unterminated_quote",
+                f"the quoted field that starts on line {info.unterminated_quote_line} is never closed; "
+                "everything after the opening quote was read into that field",
+            )
         ledger.check_accounting()
         gate = profile.quality.max_reject_rate
         warnings = ledger.warnings()

@@ -77,7 +77,7 @@ clean-data clean FILE --profile PATH --report PATH [--report PATH] [--out PATH] 
 | `--rejects` | Every removed row with its reason: `.csv` or `.xlsx`. |
 | `--report` | `.html` or `.json`, given once or twice. Required. |
 | `--dry-run` | Runs every stage and writes only the reports, with `run.dry_run: true` and a "Dry run" badge in the HTML report. Exit codes are those of a real run. |
-| `--strict` | Exit 4 on any row rejected for a non-duplicate reason, any cell nulled by `on_invalid: null`, padded short records, a detected encoding, unlisted columns not in `headers.drop`, a skipped fuzzy block or any other warning. |
+| `--strict` | Exit 4 on any row rejected for a non-duplicate reason, any cell nulled by `on_invalid: null`, padded short records, a quoted field still open at the end of the file (`read.unterminated_quote`), a detected encoding, unlisted columns not in `headers.drop`, a skipped fuzzy block or any other warning. |
 | `--explain` | Prints the resolved plan and one block per stage and rule with counts and examples on stderr, whatever the log level (`--quiet` included), and adds an Explain section to both reports. stdout is unchanged. |
 | `--chunked` | Streams a CSV file in chunks; only for chunk-compatible profiles ([chunked mode](chunked-mode.md)). A profile with a whole-frame strategy (median fill, fuzzy matching, `keep: last`, `order_by`, `sort_by` or `drop_empty_columns`) and any Excel input or output are refused with exit 2 before any data is read. |
 | `--chunk-size` | Records per chunk, default 100,000. |

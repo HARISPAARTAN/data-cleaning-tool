@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import datetime as dt
 import io
 import zipfile
@@ -10,9 +11,10 @@ import openpyxl
 import pytest
 
 from cleandata.core.frame import column, positional
-from cleandata.core.reader import ReadOptions, open_source
+from cleandata.core.reader import ReadOptions, open_source, unterminated_quote_line
 from cleandata.errors import InputError
 from make_data import write_xlsx
+from support import FIXTURES
 
 
 def write(tmp_path: Path, text: str, name: str = "input.csv", encoding: str = "utf-8") -> Path:
@@ -197,3 +199,67 @@ def test_truncated_sheet_part_is_an_input_error(tmp_path: Path) -> None:
     with pytest.raises(InputError, match="cut.xlsx") as caught:
         open_source(path, ReadOptions(header_row=1))
     assert isinstance(caught.value.__cause__, ParseError)
+
+
+def test_an_unterminated_quote_is_reported_with_the_line_where_it_starts(tmp_path: Path) -> None:
+    text = 'id,note\n1,fine\n2,"never closed\n3,swallowed\n4,also swallowed\n'
+    records = list(csv.reader(io.StringIO(text, newline="")))
+    assert len(records) == 3  # header, record 1, and one record holding everything after the quote
+    source, chunk = read_all(write(tmp_path, text))
+    assert chunk.read == 2
+    assert source.info.unterminated_quote_line == 3
+    assert column(chunk.frame, positional(1)) == ["fine", "never closed\n3,swallowed\n4,also swallowed\n"]
+    assert column(chunk.frame, "_source_row") == [2, 3]
+
+
+def test_the_unterminated_quote_is_found_in_chunks_and_on_a_last_line_without_newline(tmp_path: Path) -> None:
+    source = open_source(write(tmp_path, 'id,note\n1,a\n2,b\n3,"open'), ReadOptions())
+    assert sum(chunk.read for chunk in source.chunks(1)) == 3
+    assert source.info.unterminated_quote_line == 4
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        'id,note\n1,"two\nlines"\n2,x\n',
+        'id,note\n1,"two\nlines"',
+        'id,note\n1,"say ""hi"" now"\n2,"""starts and ends"""\n',
+        'id,note\n1,5" pipe\n2,a "quoted" word\n',
+        'id,note\n1, "space before"\n2,"closed" trailing\n',
+        'id,note\n1,"a\n\nb"\n2,""\n',
+        "id,note\n",
+        "",
+    ],
+)
+def test_closed_quotes_give_no_warning(tmp_path: Path, text: str) -> None:
+    if not text:
+        text = "id,note\n"
+    source, _ = read_all(write(tmp_path, text))
+    assert source.info.unterminated_quote_line is None
+
+
+def test_the_multiline_fields_of_the_survey_fixture_are_not_flagged() -> None:
+    options = ReadOptions(encoding="utf-8-sig", delimiter=";")
+    source, chunk = read_all(FIXTURES / "01_survey_export_de.csv", **vars(options))
+    assert source.info.unterminated_quote_line is None
+    assert chunk.read == 1026
+    assert source.info.records == 1026
+
+
+@pytest.mark.parametrize(
+    ("lines", "expected"),
+    [
+        (['a,"b\n', "c\n"], 1),
+        (['1,"closed\n', 'still",y,"open\n', "more\n"], 2),
+        (['1,"closed\n', 'still",y,"open"\n'], None),
+        (['"a",b,"c\n', "x\n"], 1),
+        (['"a""b\n'], 1),
+        (['a,"b""\n', "c\n"], 1),
+        (['a,"b"\n'], None),
+        (['"a","b"\r\n'], None),
+        (['x"y,z\n'], None),
+        ([' "x\n'], None),
+    ],
+)
+def test_unterminated_quote_line_follows_the_csv_states(lines: list[str], expected: int | None) -> None:
+    assert unterminated_quote_line(1, lines, ",", '"') == expected

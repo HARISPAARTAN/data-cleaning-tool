@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import logging
 import os
 import re
@@ -224,6 +225,23 @@ def test_strict_is_exit_4_and_writes_rejects_and_reports_only(tmp_path: Path) ->
     assert result.exit_code == 4
     assert result.stdout == SUMMARY.replace("exit 0", "exit 4")
     assert {p.name for p in tmp_path.iterdir()} == {"rejects.csv", "report.json"}
+    assert '"status": "failed_strict"' in (tmp_path / "report.json").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("extra", [[], ["--chunked", "--chunk-size", "1"]])
+def test_an_unterminated_quote_warns_and_fails_strict(tmp_path: Path, extra: list[str]) -> None:
+    source = tmp_path / "quotes.csv"
+    source.write_text('id,note\n1,fine\n2,"never closed\n3,swallowed\n', encoding="utf-8")
+    profile = tmp_path / "quotes.yaml"
+    profile.write_text("version: 1\nname: quotes\ncolumns:\n  id: {type: string}\n  note: {type: string}\n")
+    result = clean(tmp_path, *extra, profile=str(profile), source=str(source))
+    assert result.exit_code == 0, result.stderr
+    assert "read.unterminated_quote: the quoted field that starts on line 3 is never closed" in result.stderr
+    report = json.loads((tmp_path / "report.json").read_text(encoding="utf-8"))
+    assert report["rows"]["read"] == 2
+    assert [w["code"] for w in report["warnings"]] == ["read.unterminated_quote"]
+    strict = clean(tmp_path, "--strict", *extra, profile=str(profile), source=str(source))
+    assert strict.exit_code == 4
     assert '"status": "failed_strict"' in (tmp_path / "report.json").read_text(encoding="utf-8")
 
 
