@@ -42,7 +42,7 @@ Demo = "https://harispaartan.github.io/data-cleaning-tool/"
 [dependency-groups]
 dev = [
   "pytest==9.2.0",
-  "hypothesis==6.170.13",
+  "hypothesis==6.170.14",
   "ruff==0.17.3",
   "mypy==2.4.1",
   "pandas-stubs==3.0.5.260914",
